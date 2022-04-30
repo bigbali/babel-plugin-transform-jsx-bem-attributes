@@ -1,0 +1,104 @@
+{
+    "root": true,
+    "parser": "@typescript-eslint/parser",
+    "plugins": [
+        "@typescript-eslint",
+        "sort-imports-es6-autofix"
+    ],
+    "extends": [
+        "eslint:recommended"
+    ],
+    "env": {
+        "browser": true,
+        "commonjs": true,
+        "node": true,
+        "es6": true
+    },
+    "overrides": [
+        {
+            "files": [
+                "*.ts",
+                "*.tsx"
+            ],
+            "extends": [
+                "plugin:@typescript-eslint/recommended",
+                "plugin:@typescript-eslint/recommended-requiring-type-checking"
+            ],
+            "parserOptions": {
+                "ecmaVersion": "latest",
+                "project": [
+                    "./tsconfig.json"
+                ]
+            }
+        }
+    ],
+    "rules": {
+        "linebreak-style": 0,
+        "comma-dangle": 0,
+        "max-len": [
+            "error",
+            120
+        ],
+        "object-curly-spacing": [
+            "error",
+            "always"
+        ],
+        "quotes": [
+            "error",
+            "single"
+        ],
+        "no-trailing-spaces": "error",
+        "semi": "error",
+        "indent": [
+            "error",
+            4,
+            {
+                "SwitchCase": 1
+            }
+        ],
+        "no-redeclare": [
+            "error",
+            {
+                "builtinGlobals": false
+            }
+        ],
+        "sort-imports-es6-autofix/sort-imports-es6": [
+            2,
+            {
+                "ignoreCase": false,
+                "ignoreMemberSort": false,
+                "memberSyntaxSortOrder": [
+                    "single",
+                    "multiple",
+                    "all",
+                    "none"
+                ]
+            }
+        ],
+        "@typescript-eslint/semi": "error",
+        "@typescript-eslint/no-extra-semi": 0,
+        "@typescript-eslint/naming-convention": [
+            "error",
+            {
+                "selector": "enumMember",
+                "format": [
+                    "UPPER_CASE"
+                ],
+                "custom": {
+                    "regex": "[A-Z]",
+                    "match": true
+                }
+            },
+            {
+                "selector": "interface",
+                "format": [
+                    "PascalCase"
+                ],
+                "custom": {
+                    "regex": "^I[A-Z]",
+                    "match": true
+                }
+            }
+        ]
+    }
+}
