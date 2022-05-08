@@ -1,53 +1,70 @@
 import * as Babel from '@babel/core';
+import {
+    JSXAttribute,
+    ObjectProperty
+} from '@babel/types';
+
+import convertObjectPropertiesToConditionalExpressions from './utils/convertObjectPropertiesToConditionalExpressions';
+
+// TODO: add support for string mods
+// TODO: add support for passive mods
+// TODO: add support for more config
+interface IBEMProps {
+    block: string;
+    elem?: string;
+    mods?: ObjectProperty[] | string;
+};
 
 const bemPropTypes = [
     'block',
     'elem',
-    'mods'
+    'mods',
+    'className'
 ];
+
 
 export default function (babel: typeof Babel): Babel.PluginObj {
     const { types } = babel;
+    const isPassiveMode = process.env.REACT_BEM_MODE === 'passive';
 
     return {
         name: 'transform-bem-props',
         visitor: {
             JSXElement(element) {
                 const opening = element.get('openingElement');
-                const attributes = opening.get('attributes');
-                // const opening = element.node.openingElement;
-                // const attributes = opening.node.attributes;
-
+                const attributes = opening.get('attributes') as Babel.NodePath<JSXAttribute>[];
                 let className = "";
-
-                let bemProps = {
+                let bemProps: IBEMProps = {
                     block: "",
                     elem: "",
-                    mods: {}
+                    mods: [],
                 };
 
-                for (const attribute of attributes) {
-                    // @ts-ignore
-                    const name = attribute.node.name.name;
-                    // @ts-ignore
+                attributes.forEach(attribute => {
+                    if (!types.isJSXAttribute(attribute)) {
+                        return;
+                    }
+
+                    const name = attribute.node.name.name as string;
                     const valueNode = attribute.node.value;
 
-                    if (name === "className") {
-                        className = valueNode.value;
-                        // @ts-ignore
-                        attribute.remove();
+                    if (!bemPropTypes.includes(name)) {
+                        return;
                     }
 
-                    // @ts-ignore
-                    if (types.isJSXAttribute(attribute)) {
-                        if (bemPropTypes.includes(name)) {
-                            // @ts-ignore
-                            bemProps[name] = valueNode.value;
-                            // @ts-ignore
-                            attribute.remove();
-                        }
+                    if (types.isStringLiteral(valueNode)) {
+                        bemProps[name as keyof IBEMProps] = valueNode.value;
                     }
-                }
+
+                    if (types.isJSXExpressionContainer(valueNode) && name === 'mods') {
+                        // @ts-ignore
+                        bemProps.mods = valueNode.expression.properties;
+                    }
+
+                    attribute.remove();
+                });
+
+
 
                 if (bemProps.block) {
                     className = `${className} ${bemProps.block}`;
@@ -58,10 +75,29 @@ export default function (babel: typeof Babel): Babel.PluginObj {
                 }
 
                 if (className) { // Create the className attribute
-                    const classNameProp = types.jsxAttribute(
-                        types.jsxIdentifier('className'),
-                        types.stringLiteral(className)
-                    );
+                    let classNameProp;
+
+                    if (typeof bemProps.mods === 'object' && !isPassiveMode) {
+                        const conditionalExpressions = convertObjectPropertiesToConditionalExpressions(bemProps.mods);
+
+                        classNameProp = types.jsxAttribute(
+                            types.jsxIdentifier('className'),
+                            types.jsxExpressionContainer(
+                                types.templateLiteral(
+                                    [
+                                        types.templateElement({ raw: className }, false),
+                                        ...conditionalExpressions.map(() => types.templateElement({ raw: '' }, false))
+                                    ],
+                                    conditionalExpressions
+                                )
+                            )
+                        );
+                    } else {
+                        classNameProp = types.jsxAttribute(
+                            types.jsxIdentifier('className'),
+                            types.stringLiteral(className)
+                        );
+                    }
 
                     // We can't push onto the attributes we got earlier,
                     // so we do this.
