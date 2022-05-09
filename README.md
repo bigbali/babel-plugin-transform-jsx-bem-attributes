@@ -13,4 +13,4 @@
     <div className={`block block-element${{isRetarded} ? "block-element_isRetarded" : ""}`} />
     <div className="block-element_hello" /></>;
 
-(You probably shouldn't use this. Yet. :))
+You probably shouldn't use this. Yet. :)
