@@ -7,6 +7,7 @@ import {
 
 import convertObjectPropertiesToConditionalExpressions from './utils/convertObjectPropertiesToConditionalExpressions';
 
+// TODO: fix disregarded 'className'
 // TODO: add support for passive mods (replaces template literal with static string)
 // TODO: add support for more config
 // TODO: remove need for repeating 'block' in order to use 'elem' if already defined on parent element
