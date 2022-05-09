@@ -24,7 +24,7 @@ export default function App() {
             </div> */}
             <div className="className" block="block" elem="element" mods={{ fullProperty: isRetarded === true }} />
             <div className="className" block="block" elem="element" mods={{ isRetarded }} />
-            <div className="className" block="block" elem="element" mods={{ isRetarded, doesThisWork: true }} />
+            <div className="className" block="block" elem="element" mods="hello" />
         </>
     );
 }

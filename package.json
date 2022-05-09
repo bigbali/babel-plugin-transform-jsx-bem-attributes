@@ -1,13 +1,13 @@
 {
-    "name": "babel-plugin-transform-react-bem-props",
+    "name": "babel-plugin-transform-jsx-bem-props",
     "version": "0.0.1",
-    "description": "A Babel plugin for transforming BEM props into className",
+    "description": "A Babel plugin for transforming BEM props into 'className'",
     "main": "dist/index.js",
     "scripts": {
         "test": "yarn run build && cd test && babel ./src/index.js -d ./dist",
         "build": "yarn run tsc"
     },
-    "author": "spaceluo",
+    "author": "Balázs Burján",
     "license": "MIT",
     "dependencies": {
         "@babel/core": "^7.17.9",

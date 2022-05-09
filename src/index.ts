@@ -1,14 +1,16 @@
 import * as Babel from '@babel/core';
 import {
     JSXAttribute,
-    ObjectProperty
+    ObjectProperty,
+    ObjectExpression
 } from '@babel/types';
 
 import convertObjectPropertiesToConditionalExpressions from './utils/convertObjectPropertiesToConditionalExpressions';
 
-// TODO: add support for string mods
-// TODO: add support for passive mods
+// TODO: add support for passive mods (replaces template literal with static string)
 // TODO: add support for more config
+// TODO: remove need for repeating 'block' in order to use 'elem' if already defined on parent element
+// TODO: refactor
 interface IBEMProps {
     block: string;
     elem?: string;
@@ -22,7 +24,6 @@ const bemPropTypes = [
     'className'
 ];
 
-
 export default function (babel: typeof Babel): Babel.PluginObj {
     const { types } = babel;
     const isPassiveMode = process.env.REACT_BEM_MODE === 'passive';
@@ -33,11 +34,11 @@ export default function (babel: typeof Babel): Babel.PluginObj {
             JSXElement(element) {
                 const opening = element.get('openingElement');
                 const attributes = opening.get('attributes') as Babel.NodePath<JSXAttribute>[];
-                let className = "";
+                let className = '';
                 let bemProps: IBEMProps = {
-                    block: "",
-                    elem: "",
-                    mods: [],
+                    block: '',
+                    elem: '',
+                    mods: []
                 };
 
                 attributes.forEach(attribute => {
@@ -56,29 +57,42 @@ export default function (babel: typeof Babel): Babel.PluginObj {
                         bemProps[name as keyof IBEMProps] = valueNode.value;
                     }
 
-                    if (types.isJSXExpressionContainer(valueNode) && name === 'mods') {
-                        // @ts-ignore
-                        bemProps.mods = valueNode.expression.properties;
+                    if (name === 'mods') {
+                        if (types.isJSXExpressionContainer(valueNode)) {
+                            // TODO what the duck is this
+                            bemProps.mods = (valueNode.expression as ObjectExpression).properties as ObjectProperty[];
+                        }
+
+                        if (types.isStringLiteral(valueNode)) {
+                            bemProps.mods = valueNode.value;
+                        }
                     }
 
+                    // Remove all BEM attributes. If the 'className' attribute exists,
+                    // it will be replaced by our custom one.
                     attribute.remove();
                 });
 
-
-
                 if (bemProps.block) {
-                    className = `${className} ${bemProps.block}`;
+                    className = `${className ? `${className} ` : ''}${bemProps.block}`;
 
                     if (bemProps.elem) {
                         className = `${className} ${bemProps.block}-${bemProps.elem}`
+
+                        if (typeof bemProps.mods === 'string') {
+                            className = `${bemProps.block}-${bemProps.elem}_${bemProps.mods}`;
+                        }
                     }
                 }
 
-                if (className) { // Create the className attribute
+                if (className) { // Create the 'className' attribute
                     let classNameProp;
 
                     if (typeof bemProps.mods === 'object' && !isPassiveMode) {
-                        const conditionalExpressions = convertObjectPropertiesToConditionalExpressions(bemProps.mods);
+                        const conditionalExpressions = convertObjectPropertiesToConditionalExpressions(
+                            bemProps.mods,
+                            `${bemProps.block}${bemProps.elem ? `-${bemProps.elem}` : ''}`
+                        );
 
                         classNameProp = types.jsxAttribute(
                             types.jsxIdentifier('className'),
@@ -92,15 +106,15 @@ export default function (babel: typeof Babel): Babel.PluginObj {
                                 )
                             )
                         );
-                    } else {
+                    }
+                    else {
                         classNameProp = types.jsxAttribute(
                             types.jsxIdentifier('className'),
                             types.stringLiteral(className)
                         );
                     }
 
-                    // We can't push onto the attributes we got earlier,
-                    // so we do this.
+                    // We can't push directly onto the NodePath[] attributes we worked with earlier
                     opening.node.attributes.push(classNameProp);
                 }
             }
