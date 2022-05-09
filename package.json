@@ -2,6 +2,19 @@
     "name": "babel-plugin-transform-jsx-bem-props",
     "version": "0.0.1",
     "description": "A Babel plugin for transforming BEM props into 'className'",
+    "homepage": "https://github.com/bigbali/babel-plugin-transform-jsx-bem-props/",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/bigbali/babel-plugin-transform-jsx-bem-props.git"
+    },
+    "keywords": [
+        "babel",
+        "react",
+        "jsx",
+        "bem",
+        "props",
+        "transform"
+    ],
     "main": "dist/index.js",
     "scripts": {
         "test": "yarn run build && cd test && babel ./src/index.js -d ./dist",
