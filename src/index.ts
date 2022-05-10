@@ -85,7 +85,7 @@ export default function (babel: typeof Babel): Babel.PluginObj {
                         className = `${className} ${bemProps.block}${elemConnector}${bemProps.elem}`
 
                         if (typeof bemProps.mods === 'string') {
-                            className = `${bemProps.block}-${bemProps.elem}${modsConnector}${bemProps.mods}`;
+                            className = `${className} ${bemProps.block}${elemConnector}${bemProps.elem}${modsConnector}${bemProps.mods}`;
                         }
                     }
                 }
@@ -93,7 +93,7 @@ export default function (babel: typeof Babel): Babel.PluginObj {
                 if (className) { // Create the 'className' attribute
                     let classNameProp;
 
-                    if (typeof bemProps.mods === 'object' && !isPassiveMode) {
+                    if (typeof bemProps.mods === 'object' && bemProps.mods.length && !isPassiveMode) {
                         const conditionalExpressions = convertObjectPropertiesToConditionalExpressions(
                             bemProps.mods,
                             `${bemProps.block}${bemProps.elem ? `${elemConnector}${bemProps.elem}` : ''}`
