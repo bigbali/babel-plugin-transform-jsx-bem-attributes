@@ -7,9 +7,7 @@ import {
 
 import convertObjectPropertiesToConditionalExpressions from './utils/convertObjectPropertiesToConditionalExpressions';
 
-// TODO: fix disregarded 'className'
 // TODO: add support for passive mods (replaces template literal with static string)
-// TODO: add support for more config
 // TODO: remove need for repeating 'block' in order to use 'elem' if already defined on parent element
 // TODO: refactor
 interface IBEMProps {
@@ -28,6 +26,8 @@ const bemPropTypes = [
 export default function (babel: typeof Babel): Babel.PluginObj {
     const { types } = babel;
     const isPassiveMode = process.env.REACT_BEM_MODE === 'passive';
+    const elemConnector = process.env.REACT_BEM_ELEM_CONNECTOR || '-';
+    const modsConnector = process.env.REACT_BEM_MODS_CONNECTOR || '_';
 
     return {
         name: 'transform-bem-props',
@@ -58,6 +58,10 @@ export default function (babel: typeof Babel): Babel.PluginObj {
                         bemProps[name as keyof IBEMProps] = valueNode.value;
                     }
 
+                    if (name === 'className' && types.isStringLiteral(valueNode)) {
+                        className = valueNode.value;
+                    }
+
                     if (name === 'mods') {
                         if (types.isJSXExpressionContainer(valueNode)) {
                             // TODO what the duck is this
@@ -78,10 +82,10 @@ export default function (babel: typeof Babel): Babel.PluginObj {
                     className = `${className ? `${className} ` : ''}${bemProps.block}`;
 
                     if (bemProps.elem) {
-                        className = `${className} ${bemProps.block}-${bemProps.elem}`
+                        className = `${className} ${bemProps.block}${elemConnector}${bemProps.elem}`
 
                         if (typeof bemProps.mods === 'string') {
-                            className = `${bemProps.block}-${bemProps.elem}_${bemProps.mods}`;
+                            className = `${bemProps.block}-${bemProps.elem}${modsConnector}${bemProps.mods}`;
                         }
                     }
                 }
@@ -92,9 +96,10 @@ export default function (babel: typeof Babel): Babel.PluginObj {
                     if (typeof bemProps.mods === 'object' && !isPassiveMode) {
                         const conditionalExpressions = convertObjectPropertiesToConditionalExpressions(
                             bemProps.mods,
-                            `${bemProps.block}${bemProps.elem ? `-${bemProps.elem}` : ''}`
+                            `${bemProps.block}${bemProps.elem ? `${elemConnector}${bemProps.elem}` : ''}`
                         );
 
+                        // Construct a template literal with conditional expressions
                         classNameProp = types.jsxAttribute(
                             types.jsxIdentifier('className'),
                             types.jsxExpressionContainer(

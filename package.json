@@ -1,6 +1,6 @@
 {
     "name": "babel-plugin-transform-jsx-bem-props",
-    "version": "0.0.1",
+    "version": "0.0.2",
     "description": "A Babel plugin for transforming BEM props into 'className'",
     "homepage": "https://github.com/bigbali/babel-plugin-transform-jsx-bem-props/",
     "repository": {
