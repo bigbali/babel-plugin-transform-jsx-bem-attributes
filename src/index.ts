@@ -2,12 +2,13 @@ import * as Babel from '@babel/core';
 import {
     JSXAttribute,
     ObjectProperty,
-    ObjectExpression
+    ObjectExpression,
 } from '@babel/types';
 
 import convertObjectPropertiesToConditionalExpressions from './utils/convertObjectPropertiesToConditionalExpressions';
+import convertObjectPropertiesToString from './utils/convertObjectPropertiesToString';
 
-// TODO: add support for passive mods (replaces template literal with static string)
+// TODO: actual tests
 // TODO: remove need for repeating 'block' in order to use 'elem' if already defined on parent element
 // TODO: refactor
 interface IBEMProps {
@@ -16,19 +17,28 @@ interface IBEMProps {
     mods?: ObjectProperty[] | string;
 };
 
-const bemPropTypes = [
-    'block',
-    'elem',
-    'mods',
-    'className'
+enum BEMPropTypes {
+    BLOCK = 'block',
+    ELEM = 'elem',
+    MODS = 'mods',
+    CLASSNAME = 'className'
+}
+
+const bemPropTypes: string[] = [
+    BEMPropTypes.BLOCK,
+    BEMPropTypes.ELEM,
+    BEMPropTypes.MODS,
+    BEMPropTypes.CLASSNAME
 ];
 
-export default function (babel: typeof Babel): Babel.PluginObj {
-    const { types } = babel;
-    const isPassiveMode = process.env.REACT_BEM_MODE === 'passive';
-    const elemConnector = process.env.REACT_BEM_ELEM_CONNECTOR || '-';
-    const modsConnector = process.env.REACT_BEM_MODS_CONNECTOR || '_';
+// process.env.REACT_BEM_MODE_PASSIVE = 'true';
 
+// Node.js environment variables
+export const IS_PASSIVE = process.env.REACT_BEM_MODE_PASSIVE;
+export const ELEM_CONNECTOR = process.env.REACT_BEM_ELEM_CONNECTOR || '-';
+export const MODS_CONNECTOR = process.env.REACT_BEM_MODS_CONNECTOR || '_';
+
+export default function ({ types }: typeof Babel): Babel.PluginObj {
     return {
         name: 'transform-bem-props',
         visitor: {
@@ -56,21 +66,15 @@ export default function (babel: typeof Babel): Babel.PluginObj {
 
                     if (types.isStringLiteral(valueNode)) {
                         bemProps[name as keyof IBEMProps] = valueNode.value;
+
+                        if (name === BEMPropTypes.CLASSNAME) {
+                            className = valueNode.value;
+                        }
                     }
 
-                    if (name === 'className' && types.isStringLiteral(valueNode)) {
-                        className = valueNode.value;
-                    }
-
-                    if (name === 'mods') {
-                        if (types.isJSXExpressionContainer(valueNode)) {
-                            // TODO what the duck is this
-                            bemProps.mods = (valueNode.expression as ObjectExpression).properties as ObjectProperty[];
-                        }
-
-                        if (types.isStringLiteral(valueNode)) {
-                            bemProps.mods = valueNode.value;
-                        }
+                    // When we have mods={`${conditional ? 'this' : 'that'}`}
+                    if (types.isJSXExpressionContainer(valueNode) && name === BEMPropTypes.MODS) {
+                        bemProps.mods = (valueNode.expression as ObjectExpression).properties as ObjectProperty[];
                     }
 
                     // Remove all BEM attributes. If the 'className' attribute exists,
@@ -82,44 +86,61 @@ export default function (babel: typeof Babel): Babel.PluginObj {
                     className = `${className ? `${className} ` : ''}${bemProps.block}`;
 
                     if (bemProps.elem) {
-                        className = `${className} ${bemProps.block}${elemConnector}${bemProps.elem}`
+                        className = `${className} ${bemProps.block}${ELEM_CONNECTOR}${bemProps.elem}`
 
                         if (typeof bemProps.mods === 'string') {
-                            className = `${className} ${bemProps.block}${elemConnector}${bemProps.elem}${modsConnector}${bemProps.mods}`;
+                            className = `${className} ${bemProps.block}${ELEM_CONNECTOR}${bemProps.elem}${MODS_CONNECTOR}${bemProps.mods}`;
                         }
                     }
                 }
 
-                if (className) { // Create the 'className' attribute
-                    let classNameProp;
+                if (!className) { // It is possible that we don't have any props to construct 'className' from
+                    return;
+                }
 
-                    if (typeof bemProps.mods === 'object' && bemProps.mods.length && !isPassiveMode) {
-                        const conditionalExpressions = convertObjectPropertiesToConditionalExpressions(
-                            bemProps.mods,
-                            `${bemProps.block}${bemProps.elem ? `${elemConnector}${bemProps.elem}` : ''}`
-                        );
+                let classNameProp;
 
-                        // Construct a template literal with conditional expressions
-                        classNameProp = types.jsxAttribute(
-                            types.jsxIdentifier('className'),
-                            types.jsxExpressionContainer(
-                                types.templateLiteral(
-                                    [
-                                        types.templateElement({ raw: className }, false),
-                                        ...conditionalExpressions.map(() => types.templateElement({ raw: '' }, false))
-                                    ],
-                                    conditionalExpressions
-                                )
+                // We don't need to do anything if 'mods' is already in string format,
+                // so we just convert it if it's an object
+                if (IS_PASSIVE && typeof bemProps.mods === 'object') {
+                    const modsString = convertObjectPropertiesToString(
+                        bemProps.mods,
+                        `${bemProps.block}${bemProps.elem ? `${ELEM_CONNECTOR}${bemProps.elem}` : ''}`
+                    );
+
+                    if (modsString) {
+                        className = `${className} ${modsString}`;
+                    }
+                }
+
+                if (IS_PASSIVE || typeof bemProps.mods === 'string') {
+                    classNameProp = types.jsxAttribute(
+                        types.jsxIdentifier(BEMPropTypes.CLASSNAME),
+                        types.stringLiteral(className)
+                    );
+                }
+                else if (typeof bemProps.mods === 'object' && bemProps.mods.length && !IS_PASSIVE) {
+                    const conditionalExpressions = convertObjectPropertiesToConditionalExpressions(
+                        bemProps.mods,
+                        `${bemProps.block}${bemProps.elem ? `${ELEM_CONNECTOR}${bemProps.elem}` : ''}`
+                    );
+
+                    // Construct a template literal with conditional expressions
+                    classNameProp = types.jsxAttribute(
+                        types.jsxIdentifier(BEMPropTypes.CLASSNAME),
+                        types.jsxExpressionContainer(
+                            types.templateLiteral(
+                                [
+                                    types.templateElement({ raw: `${className} ` }, false),
+                                    ...conditionalExpressions.map(() => types.templateElement({ raw: '' }, false))
+                                ],
+                                conditionalExpressions
                             )
-                        );
-                    }
-                    else {
-                        classNameProp = types.jsxAttribute(
-                            types.jsxIdentifier('className'),
-                            types.stringLiteral(className)
-                        );
-                    }
+                        )
+                    );
+                }
 
+                if (classNameProp) {
                     // We can't push directly onto the NodePath[] attributes we worked with earlier
                     opening.node.attributes.push(classNameProp);
                 }
