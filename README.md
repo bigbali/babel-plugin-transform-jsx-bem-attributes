@@ -17,12 +17,34 @@
     <div block="block" elem="element" mods={{ modifier: true }} />
     <div className="beautiful-className" block="block" elem="element" mods={{ modifier: true }} />
 
-                                ↓ becomes ↓
+<!-- Push inwards without triggering code formatting -->
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;↓ becomes ↓
+
+&nbsp;
 
     <div className="block" />
     <div className="block block-element" />
     <div className={`block block-element ${modifier: true ? 'block-element_modifier' : ''}`} />
     <div className={`beautiful-className block block-element ${modifier: true ? 'block-element_modifier' : ''}`} />
+
+### Configuration:
+
+You can provide these environment variables:
+- REACT_BEM_MODE_PASSIVE: set this to any thruthy value and no conditional expressions will be created, only static strings
+- REACT_BEM_ELEM_CONNECTOR
+- REACT_BEM_MODS_CONNECTOR
+
+You can set these in your Webpack config, like this:
+
+    plugins: [
+        new webpack.DefinePlugin({
+            'process.env': {
+                REACT_BEM_MODE_PASSIVE: 'true',
+                REACT_BEM_ELEM_CONNECTOR: '???',
+                REACT_BEM_MODS_CONNECTOR: '|||'
+            }
+        })
+    ]
 
 ### What sense does this possibly make?
 
@@ -47,5 +69,7 @@ In your styles you can do magic such as:
     }
 
 You could argue that it makes the classes unnecessarily long, increasing the overall file size, and yes, that is the tradeoff.
+
+#### If you notice any errors or have any suggestions, feel free to reach out.
 
 
