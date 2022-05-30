@@ -1,5 +1,5 @@
 import { types } from '@babel/core';
-import { Identifier } from '@babel/types';
+import { ConditionalExpression, Identifier, ObjectProperty } from '@babel/types';
 import { BEMProps, BEMPropTypes, ELEM_CONNECTOR, MODS_CONNECTOR, PASSIVE } from '..';
 
 // TODO: if block is inherited but there is no elem, omit block
@@ -60,22 +60,17 @@ export function* constructElem({ block, elem }: BEMProps) {
 };
 
 export function* constructMods(bemProps: BEMProps) {
-    const { elem, mods } = bemProps;
+    const { block: _block, elem, mods } = bemProps;
 
     if (!mods) {
         return EMPTY;
     }
 
     // If 'block' is top level and we don't have 'elem', apply 'mods' to 'block'
-    if (!elem && !elem?.length) {
+    if (!elem && !elem?.length && _block) {
         for (const block of constructBlock(bemProps)) {
             if (Array.isArray(mods)) {
                 for (const mod of mods) {
-                    console.log(mod)
-                    // if (typeof mod === 'string') {
-                    //     yield `${block}${MODS_CONNECTOR}${mod}`;
-                    // }
-
                     if (types.isStringLiteral(mod)) {
                         yield `${block}${MODS_CONNECTOR}${mod.value}`;
                     }
@@ -98,39 +93,43 @@ export function* constructMods(bemProps: BEMProps) {
             }
         }
 
-        return;
+        return EMPTY;
     }
-
-    for (const elem of constructElem(bemProps)) {
-        if (Array.isArray(mods)) {
-            for (const mod of mods) {
-                if (typeof mod === 'string') {
-                    yield `${elem}${MODS_CONNECTOR}${mod}`;
-                }
-
-                if (types.isObjectProperty(mod)) {
-                    mod.key = mod.key as Identifier;
-
-                    if (PASSIVE) {
-                        console.warn(`${mod.key.name} is an object property, but passive mode is enabled. Please use a string literal instead.`);
+    else if (elem) {
+        for (const elem of constructElem(bemProps)) {
+            if (Array.isArray(mods)) {
+                for (const mod of mods) {
+                    if (typeof mod === 'string') {
+                        yield `${elem}${MODS_CONNECTOR}${mod}`;
                     }
-                    else {
-                        yield `${elem}${MODS_CONNECTOR}${mod.key.name}`;
+
+                    if (types.isObjectProperty(mod)) {
+                        mod.key = mod.key as Identifier;
+
+                        if (PASSIVE) {
+                            console.warn(`${mod.key.name} is an object property, but passive mode is enabled. Please use a string literal instead.`);
+                        }
+                        else {
+                            yield `${elem}${MODS_CONNECTOR}${mod.key.name}`;
+                        }
                     }
                 }
             }
-        }
 
-        if (typeof mods === 'string') {
-            yield `${elem}${MODS_CONNECTOR}${mods}`;
+            if (typeof mods === 'string') {
+                yield `${elem}${MODS_CONNECTOR}${mods}`;
+            }
         }
     }
+
+    return EMPTY;
 }
 
 export const construct = (bemProps: BEMProps) => {
     let _block = EMPTY;
     let _elem = EMPTY;
     let _mods = EMPTY;
+    let _conditionalExpressions: ConditionalExpression[] = [];
 
     for (const blockItem of constructBlock(bemProps)) {
         const SPACE = _block ? WHITESPACE : EMPTY;
@@ -144,14 +143,26 @@ export const construct = (bemProps: BEMProps) => {
 
     // TODO: during construction of mods decide if string or jsxexpression
 
+    if (Array.isArray(bemProps.mods)) {
+        const modsIterator = constructMods(bemProps);
+
+        for (const mod of bemProps.mods) {
+            if (types.isObjectProperty(mod)) {
+                const conditionalExpression = getConditionalExpression(mod, modsIterator);
+
+                if (!conditionalExpression) {
+                    continue;
+                }
+
+                _conditionalExpressions.push(conditionalExpression);
+            }
+        }
+    }
+
     for (const modsItem of constructMods(bemProps)) {
         const SPACE = _mods ? WHITESPACE : EMPTY;
         _mods = `${_mods}${SPACE}${modsItem}`;
     }
-
-    // if (!PASSIVE) {
-    //     return;
-    // }
 
     const SPACE_AFTER_BLOCK = _block && (_elem || _mods)
         ? WHITESPACE
@@ -160,30 +171,37 @@ export const construct = (bemProps: BEMProps) => {
         ? WHITESPACE
         : EMPTY;
 
+    const CLASS_NAME = `${_block}${SPACE_AFTER_BLOCK}${_elem}${SPACE_AFTER_ELEM}${_mods}`;
+
+    if (!CLASS_NAME) {
+        return;
+    }
+
+    if (!PASSIVE && _conditionalExpressions.length) {
+        return (
+            types.jsxAttribute(
+                types.jsxIdentifier(BEMPropTypes.CLASSNAME),
+                types.jsxExpressionContainer(
+                    types.templateLiteral(
+                        [
+                            types.templateElement({ raw: `${CLASS_NAME} ` }, false),
+                            ..._conditionalExpressions.map(() => types.templateElement({ raw: '' }, false))
+                        ],
+                        _conditionalExpressions
+                    )
+                )
+            )
+        );
+    }
+
     return (
         types.jsxAttribute(
             types.jsxIdentifier(BEMPropTypes.CLASSNAME),
-            types.stringLiteral(`${_block}${SPACE_AFTER_BLOCK}${_elem}${SPACE_AFTER_ELEM}${_mods}`)
+            types.stringLiteral(CLASS_NAME)
         )
     );
 
-    // if (isActive) {
-    //     const conditionalExpressions = convertObjectPropertiesToConditionalExpressions(bemProps);
 
-    //     // Construct a template literal with conditional expressions
-    //     classNameProp = types.jsxAttribute(
-    //         types.jsxIdentifier(BEMPropTypes.CLASSNAME),
-    //         types.jsxExpressionContainer(
-    //             types.templateLiteral(
-    //                 [
-    //                     types.templateElement({ raw: `${className} ` }, false),
-    //                     ...conditionalExpressions.map(() => types.templateElement({ raw: '' }, false))
-    //                 ],
-    //                 conditionalExpressions
-    //             )
-    //         )
-    //     );
-    // }
     // else {
     //     classNameProp = types.jsxAttribute(
     //         types.jsxIdentifier(BEMPropTypes.CLASSNAME),
@@ -196,6 +214,44 @@ export const construct = (bemProps: BEMProps) => {
     // console.log('mods:', _mods)
 
     // return `${_block}\n${_elem}\n${_mods}`;
+}
+
+// const getConditionalExpressions = (bemProps: BEMProps, modsIterator: any) => {
+//     const { mods } = bemProps;
+
+//     if (!mods) {
+//         return;
+//     }
+
+//     return (mods as ObjectProperty[]).map((mod: ObjectProperty) => {
+//         const modValue = modsIterator.next().value;
+
+//         if (modValue) {
+//             return types.conditionalExpression(
+//                 // Pass in an array with a single ObjectProperty value
+//                 types.objectExpression([mod]),
+//                 types.stringLiteral(modValue),
+//                 types.stringLiteral(EMPTY)
+//             );
+//         }
+//     });;
+// }
+
+const getConditionalExpression = (mod: ObjectProperty, modsIterator: any) => {
+    if (!mod) {
+        return;
+    }
+
+    const modValue = modsIterator.next().value;
+
+    if (modValue) {
+        return types.conditionalExpression(
+            // Pass in an array with a single ObjectProperty value
+            types.objectExpression([mod]),
+            types.stringLiteral(modValue),
+            types.stringLiteral(EMPTY)
+        );
+    }
 }
 
 export default construct;

@@ -234,7 +234,9 @@ const traverseJSXElementTree = (element: NodePath<JSXElement>, inheritedBlock: B
 
     const classNameAttribute = construct(bemProps);
     // @ts-ignore
-    attributes.push(classNameAttribute);
+    if (classNameAttribute) {
+        attributes.push(classNameAttribute);
+    }
 
     // console.log(`[${constructBlock(bemProps)}] [${constructElem(bemProps)}]`)
 
