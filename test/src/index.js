@@ -92,6 +92,60 @@ export const stringBlockAndStringArrayMods = () => {
     );
 }
 
+export const stringBlockObjectModsTrue = () => {
+    return (
+        <div block="Block" mods={{ objectMod0: true, objectMod1: true, objectMod2: true }} />
+    );
+}
+
+export const stringBlockObjectModsMixed = () => {
+    return (
+        <div block="Block" mods={{ objectMod0: true, objectMod1: false, objectMod2: true }} />
+    );
+}
+
+export const stringBlockObjectModsFalse = () => {
+    return (
+        <div block="Block" mods={{ objectMod0: false, objectMod1: false, objectMod2: false }} />
+    );
+}
+
+export const stringArrayBlockObjectModsTrue = () => {
+    return (
+        <div block={['Block0', 'Block1', 'Block2']} mods={{ objectMod0: true, objectMod1: true, objectMod2: true }} />
+    );
+}
+
+export const stringArrayBlockObjectModsMixed = () => {
+    return (
+        <div block={['Block0', 'Block1', 'Block2']} mods={{ objectMod0: true, objectMod1: false, objectMod2: true }} />
+    );
+}
+
+export const stringArrayBlockObjectModsFalse = () => {
+    return (
+        <div block={['Block0', 'Block1', 'Block2']} mods={{ objectMod0: false, objectMod1: false, objectMod2: false }} />
+    );
+}
+
+export const stringBlockStringElemObjectModsTrue = () => {
+    return (
+        <div block="Block" elem="Elem" mods={{ objectMod0: true, objectMod1: true, objectMod2: true }} />
+    );
+}
+export const stringBlockStringArrayElemObjectModsTrue = () => {
+    return (
+        <div block={["Block0", 'Block1', 'Block2']} elem="Elem" mods={{ objectMod0: true, objectMod1: true, objectMod2: true }} />
+    );
+}
+
+export const stringBlockStringElemStringMods = () => {
+    return (
+        <div block="Block" elem="Elem" mods="Mods" />
+    );
+}
+
+
 // export function AppWithBlockInheritance() {
 //     const [blockInheritance, setBlockInheritance] = useState(true);
 
