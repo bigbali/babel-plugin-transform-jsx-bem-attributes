@@ -1,15 +1,12 @@
 import { types } from '@babel/core';
 import { ConditionalExpression, Identifier, ObjectProperty } from '@babel/types';
-import { BEMProps, BEMPropTypes, ELEM_CONNECTOR, MODS_CONNECTOR, PASSIVE } from '..';
+import { ELEM_CONNECTOR, MODS_CONNECTOR, PASSIVE } from '../constants';
+import { BEMProps, BEMPropTypes } from '../types';
 
 // TODO??? convert from StringLiteral EVERYWHERE to string before adding to bemprops
-
+// TODO support for classname
 const WHITESPACE = ' ';
 const EMPTY = '';
-
-const isValidBlock = () => {
-
-}
 
 export function* constructBlock({ block, blockIsTopLevel }: BEMProps) {
     if (!block || !blockIsTopLevel) { // Don't need block if it's inherited
@@ -18,6 +15,10 @@ export function* constructBlock({ block, blockIsTopLevel }: BEMProps) {
 
     if (Array.isArray(block)) {
         for (const { value } of block) {
+            if (!value) {
+                continue;
+            }
+
             yield value;
         }
     }
@@ -34,13 +35,21 @@ export function* constructElem({ block, elem }: BEMProps) {
 
     if (Array.isArray(block)) {
         for (const { value: blockValue } of block) {
+            if (!blockValue) {
+                continue;
+            }
+
             if (Array.isArray(elem)) {
                 for (const { value: elemValue } of elem) {
+                    if (!elemValue) {
+                        continue;
+                    }
+
                     yield `${blockValue}${ELEM_CONNECTOR}${elemValue}`;
                 }
             }
 
-            if (typeof elem === 'string') {
+            if (typeof elem === 'string' && elem) {
                 yield `${blockValue}${ELEM_CONNECTOR}${elem}`;
             }
         }
@@ -48,6 +57,9 @@ export function* constructElem({ block, elem }: BEMProps) {
 
     if (typeof block === 'string' && Array.isArray(elem)) {
         for (const { value: elemValue } of elem) {
+            if (!elemValue) {
+                continue;
+            }
 
             yield `${block}${ELEM_CONNECTOR}${elemValue}`;
         }
@@ -132,10 +144,35 @@ export function* constructMods(bemProps: BEMProps) {
     return EMPTY;
 }
 
+export const constructClassName = (bemProps: BEMProps) => {
+    const { className } = bemProps;
+
+    if (!className) {
+        return EMPTY;
+    }
+
+    if (Array.isArray(className)) {
+        return className.reduce((constructedClassName, currentClassName) => {
+            const SPACE_AFTER_CLASSNAME = constructedClassName
+                ? WHITESPACE
+                : EMPTY;
+
+            return `${constructedClassName}${SPACE_AFTER_CLASSNAME}${currentClassName.value}`;
+        }, EMPTY);
+    }
+
+    if (typeof className === 'object') {
+        return EMPTY;
+    }
+
+    return className;
+}
+
 export const construct = (bemProps: BEMProps) => {
     let _block = EMPTY;
     let _elem = EMPTY;
     let _mods = EMPTY;
+    let _className = constructClassName(bemProps);
     let _conditionalExpressions: ConditionalExpression[] = [];
 
     for (const blockItem of constructBlock(bemProps)) {
@@ -169,15 +206,21 @@ export const construct = (bemProps: BEMProps) => {
         _mods = `${_mods}${SPACE}${modsItem}`;
     }
 
-    const SPACE_AFTER_BLOCK = _block && (_elem || _mods)
+    const SPACE_AFTER_BLOCK = _block && (_elem || _mods || _className)
         ? WHITESPACE
         : EMPTY;
     const SPACE_AFTER_ELEM = _elem && (_mods || _conditionalExpressions.length)
         ? WHITESPACE
         : EMPTY;
+    const SPACE_AFTER_MODS = _mods
+        ? WHITESPACE
+        : EMPTY;
+    const SPACE_AFTER_CLASSNAME = _className
+        ? WHITESPACE
+        : EMPTY;
     const CLASS_NAME = _conditionalExpressions.length
-        ? `${_block}${SPACE_AFTER_BLOCK}${_elem}${SPACE_AFTER_ELEM}`
-        : `${_block}${SPACE_AFTER_BLOCK}${_elem}${SPACE_AFTER_ELEM}${_mods}`;
+        ? `${_block}${SPACE_AFTER_BLOCK}${_elem}${SPACE_AFTER_ELEM}${_className}${SPACE_AFTER_CLASSNAME}`
+        : `${_block}${SPACE_AFTER_BLOCK}${_elem}${SPACE_AFTER_ELEM}${_mods}${SPACE_AFTER_MODS}${_className}`;
 
     // console.log(CLASS_NAME.replace(/\s/g, '[SPACE]'));
 

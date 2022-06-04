@@ -18,75 +18,12 @@ import * as types from '@babel/types';
 
 import construct, { constructBlock, constructElem } from './utils/construct';
 
-// import convertObjectPropertiesToConditionalExpressions from './utils/convertObjectPropertiesToConditionalExpressions';
-import convertObjectPropertiesToString from './utils/convertObjectPropertiesToString';
-
-type Block = string | StringLiteral[];
-type Elem = string | StringLiteral[];
-type Mods = string | StringLiteral[] | ObjectProperty[];
-type ClassName = string | StringLiteral[];
-
-export interface BEMProps {
-    block: Block;
-    elem?: Elem;
-    mods?: Mods;
-    className?: ClassName;
-    blockIsTopLevel: boolean;
-};
-
-interface Attribute {
-    value: StringLiteral | JSXExpressionContainer,
-    name: {
-        name: `${BEMPropTypes}` & keyof BEMProps
-    };
-}
-
-export enum BEMPropTypes {
-    BLOCK = 'block',
-    ELEM = 'elem',
-    MODS = 'mods',
-    CLASSNAME = 'className'
-}
-
-const BEM_PROP_TYPES: string[] = [
-    BEMPropTypes.BLOCK,
-    BEMPropTypes.ELEM,
-    BEMPropTypes.MODS,
-    BEMPropTypes.CLASSNAME
-];
-
-const constructMods = ({ block, elem, mods }: BEMProps) => {
-    // if (mods?.length && types.isObjectExpression(mods[0] as object)) {
-    //     return convertObjectPropertiesToString(
-    //         mods as ObjectProperty[],
-    //         `${block}${elem ? `${ELEM_CONNECTOR}${elem}` : ''}`
-    //     );
-    // }
-    // // console.log(elem, mods)
-    // return `${block}${ELEM_CONNECTOR}${elem}${MODS_CONNECTOR}${mods}`;
-
-};
-
-const constructClassName = ({ className }: BEMProps) => {
-    // console.log(className)
-    // return className || '';
-};
-
-const transformationMap = {
-    [BEMPropTypes.BLOCK]: constructBlock,
-    [BEMPropTypes.ELEM]: constructElem,
-    [BEMPropTypes.MODS]: constructMods,
-    [BEMPropTypes.CLASSNAME]: constructClassName,
-}
+import { Attribute, BEMProps, BEMPropTypes, Block } from './types';
+import { BEM_PROP_TYPES, PASSIVE } from './constants';
 
 
 // process.env.REACT_BEM_MODE_PASSIVE = 'true';
 
-// Node.js environment variables
-export const PASSIVE = process.env.REACT_BEM_MODE_PASSIVE;
-export const DISABLE_BLOCK_INHERITANCE = process.env.REACT_BEM_DISABLE_BLOCK_INHERITANCE;
-export const ELEM_CONNECTOR = process.env.REACT_BEM_ELEM_CONNECTOR || '-';
-export const MODS_CONNECTOR = process.env.REACT_BEM_MODS_CONNECTOR || '_';
 
 export default function (): Plugin {
     return {
@@ -195,33 +132,6 @@ const traverseJSXElementTree = (element: NodePath<JSXElement>, inheritedBlock: B
             }
         }
 
-        // if (isActive) {
-        //     const conditionalExpressions = convertObjectPropertiesToConditionalExpressions(bemProps);
-
-        //     // Construct a template literal with conditional expressions
-        //     classNameProp = types.jsxAttribute(
-        //         types.jsxIdentifier(BEMPropTypes.CLASSNAME),
-        //         types.jsxExpressionContainer(
-        //             types.templateLiteral(
-        //                 [
-        //                     types.templateElement({ raw: `${className} ` }, false),
-        //                     ...conditionalExpressions.map(() => types.templateElement({ raw: '' }, false))
-        //                 ],
-        //                 conditionalExpressions
-        //             )
-        //         )
-        //     );
-        // }
-        // else {
-        //     classNameProp = types.jsxAttribute(
-        //         types.jsxIdentifier(BEMPropTypes.CLASSNAME),
-        //         types.stringLiteral(className)
-        //     );
-        // }
-
-        // log(element);
-        // console.log(bemProps.blockIsTopLevel);
-
         attributeIndexesToRemove.push(index);
     });
 
@@ -233,8 +143,9 @@ const traverseJSXElementTree = (element: NodePath<JSXElement>, inheritedBlock: B
     })
 
     const classNameAttribute = construct(bemProps);
+
     // @ts-ignore
-    if (classNameAttribute) {
+    if (classNameAttribute && classNameAttribute.value.value) {
         attributes.push(classNameAttribute);
     }
 

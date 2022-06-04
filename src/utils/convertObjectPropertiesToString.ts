@@ -1,5 +1,5 @@
 import { ObjectProperty, Identifier } from '@babel/types';
-import { MODS_CONNECTOR } from '..';
+import { MODS_CONNECTOR } from '../constants';
 
 export const convertObjectPropertiesToString = (mods: ObjectProperty[], blockElem: string): string => {
     let modsString = '';
