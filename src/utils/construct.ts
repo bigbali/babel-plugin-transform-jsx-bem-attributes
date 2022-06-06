@@ -212,7 +212,7 @@ export const construct = (bemProps: BEMProps) => {
     const SPACE_AFTER_ELEM = _elem && (_mods || _conditionalExpressions.length)
         ? WHITESPACE
         : EMPTY;
-    const SPACE_AFTER_MODS = _mods
+    const SPACE_AFTER_MODS = _mods && _className
         ? WHITESPACE
         : EMPTY;
     const SPACE_AFTER_CLASSNAME = _className

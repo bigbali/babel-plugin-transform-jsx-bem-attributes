@@ -144,37 +144,16 @@ const traverseJSXElementTree = (element: NodePath<JSXElement>, inheritedBlock: B
 
     const classNameAttribute = construct(bemProps);
 
+    // Check if the attribute is empty, and only add it if it is not
     // @ts-ignore
-    if (classNameAttribute && classNameAttribute.value.value) {
-        attributes.push(classNameAttribute);
+    if (classNameAttribute) {
+        const { value } = classNameAttribute;
+
+        if ((types.isStringLiteral(value) && value.value)
+            || types.isJSXExpressionContainer(value)) {
+            attributes.push(classNameAttribute);
+        }
     }
-
-    // console.log(`[${constructBlock(bemProps)}] [${constructElem(bemProps)}]`)
-
-    // const x = constructElem(bemProps);
-
-    // for (const y of x) {
-    //     console.log(y);
-    // }
-    // constructBlock(bemProps); constructElem(bemProps);
-
-    // console.log(bemProps.mods)
-
-
-    // if (!bemProps.block) {
-    //     throw Error('No block found');
-    // }
-
-    // test thing
-    // if (inheritedBlock) {
-    //     attributes.push(
-    //         types.jsxAttribute(
-    //             types.jsxIdentifier('FAKE_CLASSNAME'),
-    //             // @ts-ignore
-    //             types.stringLiteral(className)
-    //         )
-    //     );
-    // }
 
     element.get('children').forEach(childElement => {
         if (!types.isJSXElement(childElement) && !types.isJSXFragment(childElement)) {
