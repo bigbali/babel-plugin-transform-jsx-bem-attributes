@@ -83,8 +83,7 @@ const getDetails = (node) => {
 
 }
 
-
-describe('Transpilation process happens as expected', () => {
+describe('Transpilation process happens as expected without static mode enabled', () => {
     const fixturesDirectory = path.resolve(__dirname, 'fixtures');
     const fixtures = fs.readdirSync(fixturesDirectory);
 

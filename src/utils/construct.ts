@@ -1,5 +1,5 @@
 import { types } from '@babel/core';
-import { ConditionalExpression, Identifier, ObjectProperty } from '@babel/types';
+import { ConditionalExpression, Identifier, ObjectProperty, Expression } from '@babel/types';
 import { ELEM_CONNECTOR, MODS_CONNECTOR, PASSIVE } from '../constants';
 import { BEMProps, BEMPropTypes } from '../types';
 
@@ -8,12 +8,15 @@ import { BEMProps, BEMPropTypes } from '../types';
 const WHITESPACE = ' ';
 const EMPTY = '';
 
+// It's used quite a lot going forward, so let's make it simpler
+const isArray = Array.isArray;
+
 export function* constructBlock({ block, blockIsTopLevel }: BEMProps) {
-    if (!block || !blockIsTopLevel) { // Don't need block if it's inherited
+    if (!block || !blockIsTopLevel) { // Don't need 'block' if it's inherited
         yield EMPTY;
     }
 
-    if (Array.isArray(block)) {
+    if (isArray(block)) {
         for (const { value } of block) {
             if (!value || typeof value !== 'string') {
                 continue;
@@ -29,9 +32,9 @@ export function* constructBlock({ block, blockIsTopLevel }: BEMProps) {
 };
 
 export function* constructElem(bemProps: BEMProps) {
-    const { block, elem, mods } = bemProps;
+    const { block, elem } = bemProps;
 
-    if (!block?.length || !elem?.length) { // Abort if we have an empty array
+    if (!block?.length || !elem?.length) { // Abort if we have an empty array / string
         return EMPTY;
     }
 
@@ -40,13 +43,13 @@ export function* constructElem(bemProps: BEMProps) {
             continue;
         }
 
-        if (Array.isArray(elem)) {
-            for (const { value: elemValue } of elem) {
-                if (!elemValue) {
+        if (isArray(elem)) {
+            for (const { value: _elem } of elem) {
+                if (!_elem) {
                     continue;
                 }
 
-                yield `${_block}${ELEM_CONNECTOR}${elemValue}`;
+                yield `${_block}${ELEM_CONNECTOR}${_elem}`;
             }
         }
 
@@ -56,6 +59,7 @@ export function* constructElem(bemProps: BEMProps) {
     }
 };
 
+// TODO Refactor
 export function* constructMods(bemProps: BEMProps) {
     const { elem, mods } = bemProps;
 
@@ -63,10 +67,12 @@ export function* constructMods(bemProps: BEMProps) {
         return EMPTY;
     }
 
+    // const x = !elem && !elem?.length ? constructelem : constructblock;
+
     // If 'block' is top level and we don't have 'elem', apply 'mods' to 'block'
     if (!elem && !elem?.length) {
         for (const block of constructBlock(bemProps)) {
-            if (Array.isArray(mods)) {
+            if (isArray(mods)) {
                 if (!block) {
                     continue;
                 }
@@ -77,13 +83,19 @@ export function* constructMods(bemProps: BEMProps) {
                     }
 
                     if (types.isObjectProperty(mod)) {
-                        mod.key = mod.key as Identifier;
+                        const { key, value } = mod as { key: Identifier, value: Expression };
+
+                        // When the right hand side of the object property is a boolean and is false,
+                        // there is no point in yielding it
+                        if (types.isBooleanLiteral(value) && !value.value) {
+                            continue;
+                        }
 
                         if (PASSIVE) {
-                            console.warn(`${mod.key.name} is an object property, but passive mode is enabled. Please use a string literal instead.`);
+                            console.warn(`${key.name} is an object property, but passive mode is enabled. Please use a string literal instead.`);
                         }
                         else {
-                            yield `${block}${MODS_CONNECTOR}${mod.key.name}`;
+                            yield `${block}${MODS_CONNECTOR}${key.name}`;
                         }
                     }
                 }
@@ -98,7 +110,7 @@ export function* constructMods(bemProps: BEMProps) {
     }
     else {
         for (const elem of constructElem(bemProps)) {
-            if (Array.isArray(mods)) {
+            if (isArray(mods)) {
                 for (const mod of mods) {
                     if (!elem) {
                         continue;
@@ -109,13 +121,19 @@ export function* constructMods(bemProps: BEMProps) {
                     }
 
                     if (types.isObjectProperty(mod)) {
-                        mod.key = mod.key as Identifier;
+                        const { key, value } = mod as { key: Identifier, value: Expression };
+
+                        // When the right hand side of the object property is a boolean and is false,
+                        // there is no point in yielding it
+                        if (types.isBooleanLiteral(value) && !value.value) {
+                            continue;
+                        }
 
                         if (PASSIVE) {
-                            console.warn(`${mod.key.name} is an object property, but passive mode is enabled. Please use a string literal instead.`);
+                            console.warn(`${key.name} is an object property, but passive mode is enabled. Please use a string literal instead.`);
                         }
                         else {
-                            yield `${elem}${MODS_CONNECTOR}${mod.key.name}`;
+                            yield `${elem}${MODS_CONNECTOR}${key.name}`;
                         }
                     }
                 }
@@ -137,7 +155,7 @@ export const constructClassName = (bemProps: BEMProps) => {
         return EMPTY;
     }
 
-    if (Array.isArray(className)) {
+    if (isArray(className)) {
         return className.reduce((constructedClassName, currentClassName) => {
             const SPACE_AFTER_CLASSNAME = constructedClassName
                 ? WHITESPACE
@@ -171,32 +189,21 @@ export const construct = (bemProps: BEMProps) => {
         _elem = `${_elem}${SPACE}${elem}`;
     }
 
-    for (const modsItem of constructMods(bemProps)) {
+    for (const mod of constructMods(bemProps)) {
         const SPACE = _mods ? WHITESPACE : EMPTY;
-        _mods = `${_mods}${SPACE}${modsItem}`;
+        _mods = `${_mods}${SPACE}${mod}`;
     }
 
-    if (Array.isArray(bemProps.mods)) {
+    if (isArray(bemProps.mods)) {
         const modsIterator = constructMods(bemProps);
 
         for (const mod of bemProps.mods) {
             if (types.isObjectProperty(mod)) {
-                const {
-                    shorthand,
-                    value
-                } = mod;
+                const { value } = mod;
 
-                // When the right hand side of the object property is a boolean, evaluate it...
+                // When the right hand side of the object property is a boolean, it can only be always true or always false
+                // so there is no point in constructing a conditional expression
                 if (types.isBooleanLiteral(value)) {
-                    // ...and skip if it is false
-                    if (!value.value) {
-                        continue;
-                    }
-
-                    mod.key = mod.key as Identifier;
-                    _mods = `${_mods}${WHITESPACE}${mod.key.name}`;
-
-                    // Skip adding a conditional expression
                     continue;
                 }
 
@@ -210,44 +217,6 @@ export const construct = (bemProps: BEMProps) => {
             }
         }
     }
-
-
-    // if (Array.isArray(bemProps.mods)) {
-    //     const modsIterator = constructMods(bemProps);
-
-    //     for (const mod of bemProps.mods) {
-    //         if (types.isObjectProperty(mod)) {
-    //             const {
-    //                 shorthand,
-    //                 value
-    //             } = mod;
-
-    //             if (types.isBooleanLiteral(value)) {
-    //                 if (!value.value) {
-    //                     continue;
-    //                 }
-
-    //                 mod.key = mod.key as Identifier;
-    //                 _mods = `${_mods}${WHITESPACE}${mod.key.name}`;
-
-    //                 continue;
-    //             }
-
-    //             const conditionalExpression = getConditionalExpression(mod, modsIterator);
-
-    //             if (!conditionalExpression) {
-    //                 continue;
-    //             }
-
-    //             _conditionalExpressions.push(conditionalExpression);
-    //         }
-    //     }
-    // }
-
-    // for (const modsItem of constructMods(bemProps)) {
-    //     const SPACE = _mods ? WHITESPACE : EMPTY;
-    //     _mods = `${_mods}${SPACE}${modsItem}`;
-    // }
 
     const SPACE_AFTER_BLOCK = _block && (_elem || _mods || _className)
         ? WHITESPACE
