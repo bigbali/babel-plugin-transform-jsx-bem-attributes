@@ -175,14 +175,19 @@ export const construct = (bemProps: BEMProps) => {
     let _className = constructClassName(bemProps);
     let _conditionalExpressions: ConditionalExpression[] = [];
 
-    for (const blockItem of constructBlock(bemProps)) {
+    for (const block of constructBlock(bemProps)) {
         const SPACE = _block ? WHITESPACE : EMPTY;
-        _block = `${_block}${SPACE}${blockItem}`;
+        _block = `${_block}${SPACE}${block}`;
     }
 
-    for (const elemItem of constructElem(bemProps)) {
+    for (const elem of constructElem(bemProps)) {
         const SPACE = _elem ? WHITESPACE : EMPTY;
-        _elem = `${_elem}${SPACE}${elemItem}`;
+        _elem = `${_elem}${SPACE}${elem}`;
+    }
+
+    for (const modsItem of constructMods(bemProps)) {
+        const SPACE = _mods ? WHITESPACE : EMPTY;
+        _mods = `${_mods}${SPACE}${modsItem}`;
     }
 
     if (Array.isArray(bemProps.mods)) {
@@ -190,6 +195,25 @@ export const construct = (bemProps: BEMProps) => {
 
         for (const mod of bemProps.mods) {
             if (types.isObjectProperty(mod)) {
+                const {
+                    shorthand,
+                    value
+                } = mod;
+
+                // When the right hand side of the object property is a boolean, evaluate it...
+                if (types.isBooleanLiteral(value)) {
+                    // ...and skip if it is false
+                    if (!value.value) {
+                        continue;
+                    }
+
+                    mod.key = mod.key as Identifier;
+                    _mods = `${_mods}${WHITESPACE}${mod.key.name}`;
+
+                    // Skip adding a conditional expression
+                    continue;
+                }
+
                 const conditionalExpression = getConditionalExpression(mod, modsIterator);
 
                 if (!conditionalExpression) {
@@ -201,10 +225,43 @@ export const construct = (bemProps: BEMProps) => {
         }
     }
 
-    for (const modsItem of constructMods(bemProps)) {
-        const SPACE = _mods ? WHITESPACE : EMPTY;
-        _mods = `${_mods}${SPACE}${modsItem}`;
-    }
+
+    // if (Array.isArray(bemProps.mods)) {
+    //     const modsIterator = constructMods(bemProps);
+
+    //     for (const mod of bemProps.mods) {
+    //         if (types.isObjectProperty(mod)) {
+    //             const {
+    //                 shorthand,
+    //                 value
+    //             } = mod;
+
+    //             if (types.isBooleanLiteral(value)) {
+    //                 if (!value.value) {
+    //                     continue;
+    //                 }
+
+    //                 mod.key = mod.key as Identifier;
+    //                 _mods = `${_mods}${WHITESPACE}${mod.key.name}`;
+
+    //                 continue;
+    //             }
+
+    //             const conditionalExpression = getConditionalExpression(mod, modsIterator);
+
+    //             if (!conditionalExpression) {
+    //                 continue;
+    //             }
+
+    //             _conditionalExpressions.push(conditionalExpression);
+    //         }
+    //     }
+    // }
+
+    // for (const modsItem of constructMods(bemProps)) {
+    //     const SPACE = _mods ? WHITESPACE : EMPTY;
+    //     _mods = `${_mods}${SPACE}${modsItem}`;
+    // }
 
     const SPACE_AFTER_BLOCK = _block && (_elem || _mods || _className)
         ? WHITESPACE
@@ -218,6 +275,7 @@ export const construct = (bemProps: BEMProps) => {
     const SPACE_AFTER_CLASSNAME = _className
         ? WHITESPACE
         : EMPTY;
+
     const CLASS_NAME = _conditionalExpressions.length
         ? `${_block}${SPACE_AFTER_BLOCK}${_elem}${SPACE_AFTER_ELEM}${_className}${SPACE_AFTER_CLASSNAME}`
         : `${_block}${SPACE_AFTER_BLOCK}${_elem}${SPACE_AFTER_ELEM}${_mods}${SPACE_AFTER_MODS}${_className}`;
@@ -256,14 +314,35 @@ const getConditionalExpression = (mod: ObjectProperty, modsIterator: any) => {
 
     const modValue = modsIterator.next().value;
 
-    if (modValue) {
-        return types.conditionalExpression(
-            // Pass in an array with a single ObjectProperty value
-            types.objectExpression([mod]),
-            types.stringLiteral(modValue),
-            types.stringLiteral(EMPTY)
-        );
+    if (!modValue) {
+        return;
     }
+
+    // const { 
+    //     shorthand,
+    //     value
+    // } = mod;
+
+    // if (types.isBooleanLiteral(value)) {
+    //     const { value: booleanValue } = value;
+    // }
+
+    // objectModifier: true => convert to str, no conditional cuz its always true
+    // objectModifier: false => ignore because it's always false
+    // objectModifier: someVariable => evaluate based only on someVariable
+    // objectModifier => shorthand, evaluate based on objectModifier
+
+    if (!mod.shorthand) {
+
+    }
+
+    return types.conditionalExpression(
+        // Pass in an array with a single ObjectProperty value
+        // types.objectExpression([mod]),
+        mod.value as Exclude<types.Expression, types.RestElement>,
+        types.stringLiteral(modValue),
+        types.stringLiteral(EMPTY)
+    );
 }
 
 export default construct;

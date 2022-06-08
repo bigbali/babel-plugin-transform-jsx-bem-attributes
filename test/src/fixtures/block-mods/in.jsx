@@ -12,6 +12,7 @@ const BlockElem = () => {
             <div block="Block" mods={{ mods0: false, mods1: false }} />
             <div block="Block" mods={{ isTrue, isTrue: isTrue }} />
             <div block="Block" mods={{ isFalse, isFalse: isFalse }} />
+            <div block="Block" mods={{ trueExpression: true === true, falseExpression: true === false }} />
 
             <div block={"Block"} mods="Mods" />
             <div block={"Block"} mods={"Mods"} />
