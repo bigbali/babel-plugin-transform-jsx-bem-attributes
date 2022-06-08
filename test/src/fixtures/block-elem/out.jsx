@@ -1,3 +1,8 @@
+/*
+    This file is generated automatically.
+    All your edits will be lost upon regeneration.
+*/
+
 const BlockElem = () => {
   return <>
             <div className="Block Block-Elem" />

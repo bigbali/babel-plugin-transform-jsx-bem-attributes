@@ -4,7 +4,7 @@ import { ELEM_CONNECTOR, MODS_CONNECTOR, PASSIVE } from '../constants';
 import { BEMProps, BEMPropTypes } from '../types';
 
 // TODO??? convert from StringLiteral EVERYWHERE to string before adding to bemprops
-// TODO support for classname
+
 const WHITESPACE = ' ';
 const EMPTY = '';
 
@@ -15,7 +15,7 @@ export function* constructBlock({ block, blockIsTopLevel }: BEMProps) {
 
     if (Array.isArray(block)) {
         for (const { value } of block) {
-            if (!value) {
+            if (!value || typeof value !== 'string') {
                 continue;
             }
 
@@ -28,45 +28,31 @@ export function* constructBlock({ block, blockIsTopLevel }: BEMProps) {
     }
 };
 
-export function* constructElem({ block, elem }: BEMProps) {
+export function* constructElem(bemProps: BEMProps) {
+    const { block, elem, mods } = bemProps;
+
     if (!block?.length || !elem?.length) { // Abort if we have an empty array
         return EMPTY;
     }
 
-    if (Array.isArray(block)) {
-        for (const { value: blockValue } of block) {
-            if (!blockValue) {
-                continue;
-            }
+    for (const _block of constructBlock(bemProps)) {
+        if (!_block) {
+            continue;
+        }
 
-            if (Array.isArray(elem)) {
-                for (const { value: elemValue } of elem) {
-                    if (!elemValue) {
-                        continue;
-                    }
-
-                    yield `${blockValue}${ELEM_CONNECTOR}${elemValue}`;
+        if (Array.isArray(elem)) {
+            for (const { value: elemValue } of elem) {
+                if (!elemValue) {
+                    continue;
                 }
-            }
 
-            if (typeof elem === 'string' && elem) {
-                yield `${blockValue}${ELEM_CONNECTOR}${elem}`;
+                yield `${_block}${ELEM_CONNECTOR}${elemValue}`;
             }
         }
-    }
 
-    if (typeof block === 'string' && Array.isArray(elem)) {
-        for (const { value: elemValue } of elem) {
-            if (!elemValue) {
-                continue;
-            }
-
-            yield `${block}${ELEM_CONNECTOR}${elemValue}`;
+        if (typeof elem === 'string' && elem) {
+            yield `${_block}${ELEM_CONNECTOR}${elem}`;
         }
-    }
-
-    if (typeof block === 'string' && typeof elem === 'string') {
-        yield `${block}${ELEM_CONNECTOR}${elem}`;
     }
 };
 

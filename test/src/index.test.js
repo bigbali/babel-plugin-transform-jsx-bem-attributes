@@ -9,6 +9,12 @@ const CONFIG = {
     ]
 };
 
+const THIS_FILE_IS_GENERATED_AUTOMATICALLY = `\
+/*
+    This file is generated automatically.
+    All your edits will be lost upon regeneration.
+*/\n\n`;
+
 // const getDetails = (node,) => {
 //     if (!node || !node.type === 'VariableDeclarator') {
 //         return;
@@ -94,7 +100,7 @@ describe('Transpilation process happens as expected', () => {
         const outputAst = babel.parseSync(output, CONFIG);
         const expectedAst = babel.parseSync(expected, CONFIG);
 
-        fs.writeFile(path.resolve(fixturePath, 'out.jsx'), output, 'utf-8', () => { });
+        fs.writeFile(path.resolve(fixturePath, 'out.jsx'), `${THIS_FILE_IS_GENERATED_AUTOMATICALLY}${output}`, 'utf-8', () => { });
 
         let actualClassName, expectedClassName;
 

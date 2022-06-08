@@ -1,3 +1,8 @@
+/*
+    This file is generated automatically.
+    All your edits will be lost upon regeneration.
+*/
+
 const BlockClassName = () => {
   return <>
             <div className="Block ClassName" />
