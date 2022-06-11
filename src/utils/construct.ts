@@ -3,8 +3,6 @@ import { ConditionalExpression, Identifier, ObjectProperty, Expression } from '@
 import { ELEM_CONNECTOR, MODS_CONNECTOR, PASSIVE } from '../constants';
 import { BEMProps, BEMPropTypes } from '../types';
 
-// TODO??? convert from StringLiteral EVERYWHERE to string before adding to bemprops
-
 const WHITESPACE = ' ';
 const EMPTY = '';
 
@@ -59,7 +57,6 @@ export function* constructElem(bemProps: BEMProps) {
     }
 };
 
-// TODO Refactor
 export function* constructMods(bemProps: BEMProps) {
     const { elem, mods } = bemProps;
 
@@ -67,93 +64,47 @@ export function* constructMods(bemProps: BEMProps) {
         return EMPTY;
     }
 
-    // const x = !elem && !elem?.length ? constructelem : constructblock;
+    // If we have 'elem', use that, otherwise use 'block'
+    let modsPrefixIterator = elem?.length
+        ? constructElem(bemProps)
+        : constructBlock(bemProps);
 
-    // If 'block' is top level and we don't have 'elem', apply 'mods' to 'block'
-    if (!elem && !elem?.length) {
-        for (const block of constructBlock(bemProps)) {
-            if (isArray(mods)) {
-                if (!block) {
-                    continue;
-                }
-
-                for (const mod of mods) {
-                    if (types.isStringLiteral(mod) && block) {
-                        if (!mod.value) {
-                            continue;
-                        }
-
-                        yield `${block}${MODS_CONNECTOR}${mod.value}`;
-                    }
-
-                    if (types.isObjectProperty(mod)) {
-                        const { key, value } = mod as { key: Identifier, value: Expression };
-
-                        // When the right hand side of the object property is a boolean and is false,
-                        // there is no point in yielding it
-                        if (types.isBooleanLiteral(value) && !value.value) {
-                            continue;
-                        }
-
-                        if (PASSIVE) {
-                            console.warn(`${key.name} is an object property, but passive mode is enabled. Please use a string literal instead.`);
-                        }
-                        else {
-                            yield `${block}${MODS_CONNECTOR}${key.name}`;
-                        }
-                    }
-                }
+    for (const prefix of modsPrefixIterator) {
+        if (isArray(mods)) {
+            if (!prefix) {
+                continue;
             }
 
-            if (block && typeof mods === 'string') {
-                yield `${block}${MODS_CONNECTOR}${mods}`;
-            }
-        }
-
-        return EMPTY;
-    }
-    else {
-        for (const elem of constructElem(bemProps)) {
-            if (isArray(mods)) {
-                for (const mod of mods) {
-                    if (!elem || !mod) {
+            for (const mod of mods) {
+                if (types.isStringLiteral(mod) && prefix) {
+                    if (!mod.value) {
                         continue;
                     }
 
-                    if (types.isStringLiteral(mod) && elem) {
-                        if (!mod.value) {
-                            continue;
-                        }
+                    yield `${prefix}${MODS_CONNECTOR}${mod.value}`;
+                }
 
-                        yield `${elem}${MODS_CONNECTOR}${mod.value}`;
+                if (types.isObjectProperty(mod)) {
+                    const { key, value } = mod as { key: Identifier, value: Expression };
+
+                    // When the right hand side of the object property is a boolean and is false,
+                    // there is no point in yielding it
+                    if (types.isBooleanLiteral(value) && !value.value) {
+                        continue;
                     }
 
-                    if (mod && typeof mod === 'string') {
-                        yield `${elem}${MODS_CONNECTOR}${mod}`;
+                    if (PASSIVE) {
+                        console.warn(`${key.name} is an object property, but passive mode is enabled. Please use a string literal instead.`);
                     }
-
-                    if (types.isObjectProperty(mod)) {
-                        const { key, value } = mod as { key: Identifier, value: Expression };
-
-                        // When the right hand side of the object property is a boolean and is false,
-                        // there is no point in yielding it
-                        if (types.isBooleanLiteral(value) && !value.value) {
-                            continue;
-                        }
-
-                        if (PASSIVE) {
-                            console.warn(`${key.name} is an object property, but passive mode is enabled. Please use a string literal instead.`);
-                        }
-                        else {
-                            yield `${elem}${MODS_CONNECTOR}${key.name}`;
-                        }
+                    else {
+                        yield `${prefix}${MODS_CONNECTOR}${key.name}`;
                     }
                 }
             }
+        }
 
-            if (elem && typeof mods === 'string') {
-                yield `${elem}${MODS_CONNECTOR}${mods}`;
-            }
+        if (prefix && typeof mods === 'string') {
+            yield `${prefix}${MODS_CONNECTOR}${mods}`;
         }
     }
 
@@ -247,9 +198,8 @@ export const construct = (bemProps: BEMProps) => {
         ? `${_block}${SPACE_AFTER_BLOCK}${_elem}${SPACE_AFTER_ELEM}${_className}${SPACE_AFTER_CLASSNAME}`
         : `${_block}${SPACE_AFTER_BLOCK}${_elem}${SPACE_AFTER_ELEM}${_mods}${SPACE_AFTER_MODS}${_className}`;
 
-    // console.log(CLASS_NAME.replace(/\s/g, '[SPACE]'));
-
-    if (!PASSIVE && _conditionalExpressions.length) {
+    // If we have conditional expresssions, construct template literals using them
+    if (_conditionalExpressions.length) {
         return (
             types.jsxAttribute(
                 types.jsxIdentifier(BEMPropTypes.CLASSNAME),
@@ -266,6 +216,7 @@ export const construct = (bemProps: BEMProps) => {
         );
     }
 
+    // By default, we'll use a simple string literal
     return (
         types.jsxAttribute(
             types.jsxIdentifier(BEMPropTypes.CLASSNAME),
@@ -285,27 +236,7 @@ const getConditionalExpression = (mod: ObjectProperty, modsIterator: any) => {
         return;
     }
 
-    // const { 
-    //     shorthand,
-    //     value
-    // } = mod;
-
-    // if (types.isBooleanLiteral(value)) {
-    //     const { value: booleanValue } = value;
-    // }
-
-    // objectModifier: true => convert to str, no conditional cuz its always true
-    // objectModifier: false => ignore because it's always false
-    // objectModifier: someVariable => evaluate based only on someVariable
-    // objectModifier => shorthand, evaluate based on objectModifier
-
-    if (!mod.shorthand) {
-
-    }
-
     return types.conditionalExpression(
-        // Pass in an array with a single ObjectProperty value
-        // types.objectExpression([mod]),
         mod.value as Exclude<types.Expression, types.RestElement>,
         types.stringLiteral(modValue),
         types.stringLiteral(EMPTY)
