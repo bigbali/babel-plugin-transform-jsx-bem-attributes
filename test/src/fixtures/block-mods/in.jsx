@@ -1,4 +1,4 @@
-const BlockElem = () => {
+const BlockMods = () => {
     const isTrue = true;
     const isFalse = false;
 

@@ -3,7 +3,7 @@
     All your edits will be lost upon regeneration.
 */
 
-const BlockElem = () => {
+const BlockMods = () => {
   const isTrue = true;
   const isFalse = false;
   return <>
@@ -37,15 +37,15 @@ const BlockElem = () => {
 
             <div className="Block" />
             <div className="Block" />
-            <div className="Block Block_ Block_ Block_" />
+            <div className="Block" />
 
             <div className="Block" />
             <div className="Block" />
-            <div className="Block Block_ Block_ Block_" />
+            <div className="Block" />
 
             <div className="Block0 Block1 Block2" />
             <div className="Block0 Block1 Block2" />
-            <div className="Block0 Block1 Block2 Block0_ Block0_ Block0_ Block1_ Block1_ Block1_ Block2_ Block2_ Block2_" />
+            <div className="Block0 Block1 Block2" />
 
             <div />
             <div />

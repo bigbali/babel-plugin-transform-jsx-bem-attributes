@@ -79,6 +79,10 @@ export function* constructMods(bemProps: BEMProps) {
 
                 for (const mod of mods) {
                     if (types.isStringLiteral(mod) && block) {
+                        if (!mod.value) {
+                            continue;
+                        }
+
                         yield `${block}${MODS_CONNECTOR}${mod.value}`;
                     }
 
@@ -112,8 +116,16 @@ export function* constructMods(bemProps: BEMProps) {
         for (const elem of constructElem(bemProps)) {
             if (isArray(mods)) {
                 for (const mod of mods) {
-                    if (!elem) {
+                    if (!elem || !mod) {
                         continue;
+                    }
+
+                    if (types.isStringLiteral(mod) && elem) {
+                        if (!mod.value) {
+                            continue;
+                        }
+
+                        yield `${elem}${MODS_CONNECTOR}${mod.value}`;
                     }
 
                     if (mod && typeof mod === 'string') {

@@ -15,106 +15,85 @@ const THIS_FILE_IS_GENERATED_AUTOMATICALLY = `\
     All your edits will be lost upon regeneration.
 */\n\n`;
 
-// const getDetails = (node,) => {
-//     if (!node || !node.type === 'VariableDeclarator') {
-//         return;
-//     }
-
-//     const init = node.init;
-
-//     if (!init.type === 'ArrowFunctionExpression' && !init.type === 'FunctionExpression') {
-//         return;
-//     }
-
-//     for (const statement of init.body.body) {
-//         if (!statement.type === 'ReturnStatement') {
-//             continue;
-//         }
-
-//         let classNames = []
-
-//         statement.argument.children.forEach((child) => {
-//             if (child.type === 'JSXElement') {
-//                 for (const attribute of child.openingElement.attributes) {
-//                     if (attribute.name.name === 'className') {
-//                         classNames.push({
-//                             element: child.openingElement.name.name,
-//                             // line: attribute.loc.start.line,
-//                             name: attribute.name.name,
-//                             value: attribute.value.value
-//                         });
-//                     }
-//                 }
-//             }
-//         });
-
-//         return classNames;
-//     }
-// }
-
 const getDetails = (node) => {
-    if (!node) {
+    if (!node || !node.type === 'VariableDeclarator') {
         return;
     }
 
-    if (node.type === 'VariableDeclarator') {
-        const init = node.init;
+    const init = node.init;
 
-        if (init.type === 'ArrowFunctionExpression' || init.type === 'FunctionExpression') {
-            for (const statement of init.body.body) {
-                if (statement.type === 'ReturnStatement') {
-                    let classNames = []
-
-                    statement.argument.children.forEach((child) => {
-                        if (child.type === 'JSXElement') {
-                            for (const attribute of child.openingElement.attributes) {
-                                if (attribute.name.name === 'className') {
-                                    classNames.push(attribute.value.value)
-                                }
-                            }
-                        }
-                    });
-
-                    return classNames;
-                }
-            }
-        }
+    if (!init.type === 'ArrowFunctionExpression' && !init.type === 'FunctionExpression') {
+        return;
     }
 
+    for (const statement of init.body.body) {
+        if (statement.type === 'ReturnStatement') {
+            return (
+                statement.argument.children.reduce((array, child) => {
+                    if (child.type === 'JSXElement') {
+                        for (const attribute of child.openingElement.attributes) {
+                            if (attribute.name.name === 'className') {
+                                array.push(attribute.value.value)
+                            }
+                        }
+                    }
+
+                    return array;
+                }, [])
+            );
+        }
+    }
+}
+
+const getClassName = (ast) => {
+    const [{ declarations } = {}] = ast.program.body;
+
+    if (!declarations) {
+        console.error('No declarations found in one of the fixtures. Please check your \'in.jsx\' and \'expected.jsx\' files.');
+
+        return;
+    }
+
+    return declarations.map(getDetails);
 }
 
 describe('Transpilation process happens as expected without static mode enabled', () => {
     const fixturesDirectory = path.resolve(__dirname, 'fixtures');
     const fixtures = fs.readdirSync(fixturesDirectory);
 
-    fixtures.forEach((_fixturePath) => {
-        const fixturePath = path.resolve(fixturesDirectory, _fixturePath);
+    fixtures.forEach((fixturePath) => {
+        const fixtureDirectory = path.resolve(fixturesDirectory, fixturePath);
 
-        const input = fs.readFileSync(path.resolve(fixturePath, 'in.jsx'), 'utf-8');
-        const expected = fs.readFileSync(path.resolve(fixturePath, 'expected.jsx'), 'utf-8');
+        const input = fs.readFileSync(
+            path.resolve(fixtureDirectory, 'in.jsx'),
+            'utf-8'
+        );
+        const expected = fs.readFileSync(
+            path.resolve(fixtureDirectory, 'expected.jsx'),
+            'utf-8'
+        );
         const output = babel.transformSync(input, CONFIG).code;
-
-        const fileName = path.parse(_fixturePath).name;
 
         const outputAst = babel.parseSync(output, CONFIG);
         const expectedAst = babel.parseSync(expected, CONFIG);
 
-        fs.writeFile(path.resolve(fixturePath, 'out.jsx'), `${THIS_FILE_IS_GENERATED_AUTOMATICALLY}${output}`, 'utf-8', () => { });
+        const actualClassName = getClassName(outputAst);
+        const expectedClassName = getClassName(expectedAst);
 
-        let actualClassName, expectedClassName;
+        // Generate expected output file
+        fs.writeFile(
+            path.resolve(fixtureDirectory, 'out.jsx'),
+            `${THIS_FILE_IS_GENERATED_AUTOMATICALLY}${output}`,
+            'utf-8',
+            () => { }
+        );
 
-        // Get 'className' attributes from input file and expected file
-        for (const singleNode of outputAst.program.body) {
-            actualClassName = singleNode.declarations.map(getDetails)
-        }
-
-        for (const singleNode of expectedAst.program.body) {
-            expectedClassName = singleNode.declarations.map(getDetails)
-        }
+        const fileName = path.parse(fixturePath).name;
 
         it(fileName, () => {
             expect(actualClassName).toEqual(expectedClassName);
-        })
+        });
     })
 });
+
 
