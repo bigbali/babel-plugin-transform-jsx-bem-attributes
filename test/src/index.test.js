@@ -1,6 +1,7 @@
 const babel = require('@babel/core');
-const fs = require('fs');
+const types = require('@babel/types');
 const path = require('path');
+const fs = require('fs');
 
 const CONFIG = {
     plugins: [
@@ -16,21 +17,21 @@ const THIS_FILE_IS_GENERATED_AUTOMATICALLY = `\
 */\n\n`;
 
 const getDetails = (node) => {
-    if (!node || !node.type === 'VariableDeclarator') {
+    if (!node || !types.isVariableDeclarator(node)) {
         return;
     }
 
     const init = node.init;
-
-    if (!init.type === 'ArrowFunctionExpression' && !init.type === 'FunctionExpression') {
+    if (!types.isArrowFunctionExpression(init) && !types.isFunctionExpression(init)) {
         return;
     }
 
-    for (const statement of init.body.body) {
-        if (statement.type === 'ReturnStatement') {
+    const statements = init.body.body;
+    for (const statement of statements) {
+        if (types.isReturnStatement(statement)) {
             return (
                 statement.argument.children.reduce((array, child) => {
-                    if (child.type === 'JSXElement') {
+                    if (types.isJSXElement(child)) {
                         for (const attribute of child.openingElement.attributes) {
                             if (attribute.name.name === 'className') {
                                 array.push(attribute.value.value)
@@ -45,24 +46,30 @@ const getDetails = (node) => {
     }
 }
 
-const getClassName = (ast) => {
+const getClassNames = (ast) => {
+    // Get first element of the array, which is an object, then get its 'declarations' property. No, it's not magic. Okay, maybe a little :)
     const [{ declarations } = {}] = ast.program.body;
 
     if (!declarations) {
-        console.error('No declarations found in one of the fixtures. Please check your \'in.jsx\' and \'expected.jsx\' files.');
-
+        console.error('No declarations found in at least one fixture. Please check your \'in.jsx\' and \'expected.jsx\' files.');
         return;
     }
 
     return declarations.map(getDetails);
 }
 
-describe('Transpilation process happens as expected without static mode enabled', () => {
+describe('Transpilation process happens as expected', () => {
     const fixturesDirectory = path.resolve(__dirname, 'fixtures');
     const fixtures = fs.readdirSync(fixturesDirectory);
 
     fixtures.forEach((fixturePath) => {
         const fixtureDirectory = path.resolve(fixturesDirectory, fixturePath);
+        const dirName = path.parse(fixturePath).name;
+
+        if (dirName.includes('inheritance')) {
+            // set process.env...?
+            process.env.REACT_BEM_DISABLE_BLOCK_INHERITANCE = "true";
+        }
 
         const input = fs.readFileSync(
             path.resolve(fixtureDirectory, 'in.jsx'),
@@ -74,11 +81,12 @@ describe('Transpilation process happens as expected without static mode enabled'
         );
         const output = babel.transformSync(input, CONFIG).code;
 
+
         const outputAst = babel.parseSync(output, CONFIG);
         const expectedAst = babel.parseSync(expected, CONFIG);
 
-        const actualClassName = getClassName(outputAst);
-        const expectedClassName = getClassName(expectedAst);
+        const actualClassName = getClassNames(outputAst);
+        const expectedClassName = getClassNames(expectedAst);
 
         // Generate expected output file
         fs.writeFile(
@@ -88,9 +96,7 @@ describe('Transpilation process happens as expected without static mode enabled'
             () => { }
         );
 
-        const fileName = path.parse(fixturePath).name;
-
-        it(fileName, () => {
+        it(dirName, () => {
             expect(actualClassName).toEqual(expectedClassName);
         });
     })

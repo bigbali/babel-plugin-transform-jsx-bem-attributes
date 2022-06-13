@@ -1,9 +1,11 @@
 import {
     ObjectProperty,
+    ObjectMethod,
     StringLiteral,
-    JSXExpressionContainer
+    JSXExpressionContainer,
+    SpreadElement,
+    isObjectProperty
 } from '@babel/types';
-
 
 export type Block = string | StringLiteral[];
 export type Elem = string | StringLiteral[];
@@ -31,3 +33,12 @@ export enum BEMPropTypes {
     MODS = 'mods',
     CLASSNAME = 'className'
 };
+
+export const isObjectPropertyArray = (
+    properties: (ObjectMethod | ObjectProperty | SpreadElement)[]
+): properties is ObjectProperty[] => {
+    return properties.every(property => isObjectProperty(property));
+}
+
+export const isArray = Array.isArray;
+

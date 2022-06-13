@@ -7,8 +7,12 @@ export const BEM_PROP_TYPES: string[] = [
     BEMPropTypes.CLASSNAME
 ];
 
+export const WHITESPACE = ' ';
+export const EMPTY = '';
+export const COMMA = ',';
+
 // Node.js environment variables
 export const PASSIVE = process.env.REACT_BEM_MODE_PASSIVE;
-export const DISABLE_BLOCK_INHERITANCE = process.env.REACT_BEM_DISABLE_BLOCK_INHERITANCE;
+export const DISABLE_BLOCK_INHERITANCE = process.env.REACT_BEM_DISABLE_BLOCK_INHERITANCE || false;
 export const ELEM_CONNECTOR = process.env.REACT_BEM_ELEM_CONNECTOR || '-';
 export const MODS_CONNECTOR = process.env.REACT_BEM_MODS_CONNECTOR || '_';

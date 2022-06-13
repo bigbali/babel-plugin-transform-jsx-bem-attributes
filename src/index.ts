@@ -1,29 +1,34 @@
-// import * as Babel from '@babel/core';
-import { NodePath, PluginObj as Plugin } from '@babel/core';
-
-import { visitors } from '@babel/traverse';
+import {
+    NodePath,
+    PluginObj as Plugin
+} from '@babel/core';
 import {
     JSXAttribute,
-    ObjectProperty,
-    ObjectExpression,
-    StringLiteral,
     JSXElement,
-    ReturnStatement,
-    JSXFragment,
-    ArrayExpression,
-    JSXExpressionContainer
+    JSXIdentifier,
+    ObjectExpression,
+    ObjectMethod,
+    ObjectProperty,
+    StringLiteral,
+    SourceLocation
 } from '@babel/types';
-
+import {
+    Attribute,
+    BEMProps,
+    BEMPropTypes,
+    Block,
+    isArray,
+    isObjectPropertyArray
+} from './types';
+import {
+    BEM_PROP_TYPES,
+    COMMA,
+    DISABLE_BLOCK_INHERITANCE,
+    EMPTY,
+    WHITESPACE
+} from './constants';
+import construct from './utils/construct';
 import * as types from '@babel/types';
-
-import construct, { constructBlock, constructElem } from './utils/construct';
-
-import { Attribute, BEMProps, BEMPropTypes, Block } from './types';
-import { BEM_PROP_TYPES, PASSIVE } from './constants';
-
-
-// process.env.REACT_BEM_MODE_PASSIVE = 'true';
-
 
 export default function (): Plugin {
     return {
@@ -42,30 +47,41 @@ export default function (): Plugin {
 /**
  * Recursively traverses the JSXElement tree and constructs the 'className' attribute
  * @param element - The JSXElement to recursively traverse
- * @param inheritedBlock - The block name inherited from the parent element, which is passed down to the children
- *                         until another 'block' attribute is found
+ * @param block - The block name inherited from the parent element, which is passed down to the children
+ *                until another 'block' attribute is found
  */
-const traverseJSXElementTree = (element: NodePath<JSXElement>, inheritedBlock: Block) => {
+const traverseJSXElementTree = (element: NodePath<JSXElement>, block: Block) => {
     const {
         node: {
             openingElement: {
-                attributes
+                attributes,
+                loc,
+                name: htmlTagName
             }
         }
     } = element;
 
     const attributePaths = element.get('openingElement.attributes') as NodePath<JSXAttribute>[];
     let attributeIndexesToRemove: number[] = [];
+    let isBlockUndefined = false;
 
     let bemProps: BEMProps = {
-        block: inheritedBlock,
+        block,
         blockIsTopLevel: false,
         elem: '',
         mods: '',
         className: ''
     };
 
-    let isActive = false;
+    if (bemProps.block && !bemProps.blockIsTopLevel && process.env.REACT_BEM_DISABLE_BLOCK_INHERITANCE) {
+        handleUndefinedBlock(
+            bemProps.block,
+            htmlTagName as JSXIdentifier,
+            loc as SourceLocation
+        );
+
+        isBlockUndefined = true;
+    }
 
     attributes.forEach((attribute, index) => {
         const {
@@ -87,15 +103,23 @@ const traverseJSXElementTree = (element: NodePath<JSXElement>, inheritedBlock: B
                 bemProps.block = value;
                 bemProps.blockIsTopLevel = true;
             }
-            else {
-                bemProps[name] = value;
+            // TODO: check for elem and mods also + refactor
+            else { // TODO: Investigate
+                // If inheritance is disabled, but we have an 'elem' or 'mods' attribute which relies on the 'block' to get the prefix,
+                // we will skip all BEM attributes except 'className'
+                if (!isBlockUndefined && name !== BEMPropTypes.CLASSNAME) {
+                    bemProps[name] = value;
+                }
+                else {
+                    bemProps.className = value;
+                }
             }
         }
 
+        // attribute={/* this is a JSX expression container */}
         if (types.isJSXExpressionContainer(valueNode)) {
             const { expression } = valueNode;
 
-            // Example: block={ 'string-value' }
             if (types.isStringLiteral(expression)) {
                 const { value } = expression;
 
@@ -103,16 +127,26 @@ const traverseJSXElementTree = (element: NodePath<JSXElement>, inheritedBlock: B
                     bemProps.block = value;
                     bemProps.blockIsTopLevel = true;
                 }
-                else {
-                    bemProps[name] = value;
+                else { // TODO: Investigate
+                    if (!isBlockUndefined && name !== BEMPropTypes.CLASSNAME) {
+                        bemProps[name] = value;
+                    }
+                    else {
+                        bemProps.className = value;
+                    }
                 }
             }
 
             if (types.isArrayExpression(expression)) {
-                const { elements } = expression;
+                const { elements } = expression as { elements: StringLiteral[] };
 
-                // @ts-ignore
-                bemProps[name] = elements;
+                // TODO: Investigate
+                if (!isBlockUndefined && name !== BEMPropTypes.CLASSNAME) {
+                    bemProps[name] = elements;
+                }
+                else {
+                    bemProps.className = elements;
+                }
 
                 if (name === BEMPropTypes.BLOCK && elements.length) {
                     bemProps.blockIsTopLevel = true;
@@ -122,12 +156,8 @@ const traverseJSXElementTree = (element: NodePath<JSXElement>, inheritedBlock: B
             if (types.isObjectExpression(expression) && name === BEMPropTypes.MODS) {
                 const { properties } = expression;
 
-                // @ts-ignore
-                bemProps.mods = properties;
-
-                // If 'mods' is an object and passive mode is enabled
-                if (!PASSIVE) {
-                    isActive = true;
+                if (isObjectPropertyArray(properties)) {
+                    bemProps.mods = properties;
                 }
             }
         }
@@ -144,8 +174,7 @@ const traverseJSXElementTree = (element: NodePath<JSXElement>, inheritedBlock: B
 
     const classNameAttribute = construct(bemProps);
 
-    // Check if the attribute is empty, and only add it if it is not
-    // @ts-ignore
+    // Check if the attribute is empty, and add it only if it is not
     if (classNameAttribute) {
         const { value } = classNameAttribute;
 
@@ -177,3 +206,28 @@ const log = (element: NodePath<JSXElement>) => {
     )
 }
 
+const handleUndefinedBlock = (block: string | StringLiteral[], htmlTagName: JSXIdentifier, location: SourceLocation) => {
+    const { name } = htmlTagName;
+    const {
+        start: {
+            line,
+            column
+        } = {
+            line: 'unknown',
+            column: 'unknown'
+        }
+    } = location || {};
+
+    if (isArray(block)) {
+        block = block.reduce((acc, { value }) => {
+            const SEPARATOR = (acc && value)
+                ? `${COMMA}${WHITESPACE}`
+                : EMPTY;
+
+            return `${acc}${SEPARATOR}${value}`;
+        }, '');
+    }
+    else {
+        console.error(`Block is not defined on <${name}> at line ${line}, column ${column}. Inherited [${block}], but block inheritance is disabled.`);
+    }
+}

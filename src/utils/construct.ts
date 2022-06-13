@@ -1,13 +1,7 @@
 import { types } from '@babel/core';
 import { ConditionalExpression, Identifier, ObjectProperty, Expression } from '@babel/types';
-import { ELEM_CONNECTOR, MODS_CONNECTOR, PASSIVE } from '../constants';
-import { BEMProps, BEMPropTypes } from '../types';
-
-const WHITESPACE = ' ';
-const EMPTY = '';
-
-// It's used quite a lot going forward, so let's make it simpler
-const isArray = Array.isArray;
+import { WHITESPACE, EMPTY, ELEM_CONNECTOR, MODS_CONNECTOR, PASSIVE } from '../constants';
+import { BEMProps, BEMPropTypes, isArray } from '../types';
 
 export function* constructBlock({ block, blockIsTopLevel }: BEMProps) {
     if (!block || !blockIsTopLevel) { // Don't need 'block' if it's inherited
@@ -143,6 +137,10 @@ export const construct = (bemProps: BEMProps) => {
     let _conditionalExpressions: ConditionalExpression[] = [];
 
     for (const block of constructBlock(bemProps)) {
+        if (!bemProps.blockIsTopLevel) { // Don't add 'block' if it's inherited
+            continue;
+        }
+
         const SPACE = _block ? WHITESPACE : EMPTY;
         _block = `${_block}${SPACE}${block}`;
     }

@@ -3,7 +3,7 @@
     All your edits will be lost upon regeneration.
 */
 
-const BlockMods = () => {
+const BlockElemMods = () => {
   const isTrue = true;
   const isFalse = false;
   return <>
