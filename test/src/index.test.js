@@ -66,11 +66,6 @@ describe('Transpilation process happens as expected', () => {
         const fixtureDirectory = path.resolve(fixturesDirectory, fixturePath);
         const dirName = path.parse(fixturePath).name;
 
-        if (dirName.includes('inheritance')) {
-            // set process.env...?
-            process.env.REACT_BEM_DISABLE_BLOCK_INHERITANCE = "true";
-        }
-
         const input = fs.readFileSync(
             path.resolve(fixtureDirectory, 'in.jsx'),
             'utf-8'
@@ -81,20 +76,41 @@ describe('Transpilation process happens as expected', () => {
         );
         const output = babel.transformSync(input, CONFIG).code;
 
-
         const outputAst = babel.parseSync(output, CONFIG);
         const expectedAst = babel.parseSync(expected, CONFIG);
 
         const actualClassName = getClassNames(outputAst);
         const expectedClassName = getClassNames(expectedAst);
 
-        // Generate expected output file
-        fs.writeFile(
+        fs.writeFile( // Generate expected output file
             path.resolve(fixtureDirectory, 'out.jsx'),
             `${THIS_FILE_IS_GENERATED_AUTOMATICALLY}${output}`,
             'utf-8',
             () => { }
         );
+
+        if (dirName.includes('inheritance')) {
+            // set process.env...?
+            process.env.REACT_BEM_DISABLE_BLOCK_INHERITANCE = "true";
+            const outputWithoutInheritance = babel.transformSync(input, CONFIG).code;
+
+            fs.writeFile( // Generate expected output file
+                path.resolve(fixtureDirectory, 'out-no-inheritance.jsx'),
+                `${THIS_FILE_IS_GENERATED_AUTOMATICALLY}${outputWithoutInheritance}`,
+                'utf-8',
+                () => { }
+            );
+
+            process.env.REACT_BEM_DISABLE_BLOCK_INHERITANCE = "";
+            const outputWithInheritance = babel.transformSync(input, CONFIG).code;
+
+            fs.writeFile( // Generate expected output file
+                path.resolve(fixtureDirectory, 'out-inheritance.jsx'),
+                `${THIS_FILE_IS_GENERATED_AUTOMATICALLY}${outputWithInheritance}`,
+                'utf-8',
+                () => { }
+            );
+        }
 
         it(dirName, () => {
             expect(actualClassName).toEqual(expectedClassName);

@@ -4,7 +4,7 @@ import { WHITESPACE, EMPTY, ELEM_CONNECTOR, MODS_CONNECTOR, PASSIVE } from '../c
 import { BEMProps, BEMPropTypes, isArray } from '../types';
 
 export function* constructBlock({ block, blockIsTopLevel }: BEMProps) {
-    if (!block || !blockIsTopLevel) { // Don't need 'block' if it's inherited
+    if (!block.length || !blockIsTopLevel) { // Don't need 'block' if it's inherited
         yield EMPTY;
     }
 
@@ -26,7 +26,7 @@ export function* constructBlock({ block, blockIsTopLevel }: BEMProps) {
 export function* constructElem(bemProps: BEMProps) {
     const { block, elem } = bemProps;
 
-    if (!block?.length || !elem?.length) { // Abort if we have an empty array / string
+    if (block.length === 0 || !elem || elem.length === 0) {
         return EMPTY;
     }
 
@@ -87,12 +87,7 @@ export function* constructMods(bemProps: BEMProps) {
                         continue;
                     }
 
-                    if (PASSIVE) {
-                        console.warn(`${key.name} is an object property, but passive mode is enabled. Please use a string literal instead.`);
-                    }
-                    else {
-                        yield `${prefix}${MODS_CONNECTOR}${key.name}`;
-                    }
+                    yield `${prefix}${MODS_CONNECTOR}${key.name}`;
                 }
             }
         }

@@ -6,9 +6,6 @@ import {
     JSXAttribute,
     JSXElement,
     JSXIdentifier,
-    ObjectExpression,
-    ObjectMethod,
-    ObjectProperty,
     StringLiteral,
     SourceLocation
 } from '@babel/types';
@@ -23,7 +20,6 @@ import {
 import {
     BEM_PROP_TYPES,
     COMMA,
-    DISABLE_BLOCK_INHERITANCE,
     EMPTY,
     WHITESPACE
 } from './constants';
@@ -73,6 +69,7 @@ const traverseJSXElementTree = (element: NodePath<JSXElement>, block: Block) => 
         className: ''
     };
 
+    // TODO find best way to abort or log error when block inheritance is disabled
     if (bemProps.block && !bemProps.blockIsTopLevel && process.env.REACT_BEM_DISABLE_BLOCK_INHERITANCE) {
         handleUndefinedBlock(
             bemProps.block,
@@ -107,11 +104,11 @@ const traverseJSXElementTree = (element: NodePath<JSXElement>, block: Block) => 
             else { // TODO: Investigate
                 // If inheritance is disabled, but we have an 'elem' or 'mods' attribute which relies on the 'block' to get the prefix,
                 // we will skip all BEM attributes except 'className'
-                if (!isBlockUndefined && name !== BEMPropTypes.CLASSNAME) {
-                    bemProps[name] = value;
-                }
-                else {
+                if (isBlockUndefined && name === BEMPropTypes.CLASSNAME) {
                     bemProps.className = value;
+                }
+                if (!isBlockUndefined) {
+                    bemProps[name] = value;
                 }
             }
         }
@@ -127,12 +124,12 @@ const traverseJSXElementTree = (element: NodePath<JSXElement>, block: Block) => 
                     bemProps.block = value;
                     bemProps.blockIsTopLevel = true;
                 }
-                else { // TODO: Investigate
-                    if (!isBlockUndefined && name !== BEMPropTypes.CLASSNAME) {
-                        bemProps[name] = value;
-                    }
-                    else {
+                else {
+                    if (isBlockUndefined && name === BEMPropTypes.CLASSNAME) {
                         bemProps.className = value;
+                    }
+                    if (!isBlockUndefined) {
+                        bemProps[name] = value;
                     }
                 }
             }
@@ -140,12 +137,11 @@ const traverseJSXElementTree = (element: NodePath<JSXElement>, block: Block) => 
             if (types.isArrayExpression(expression)) {
                 const { elements } = expression as { elements: StringLiteral[] };
 
-                // TODO: Investigate
-                if (!isBlockUndefined && name !== BEMPropTypes.CLASSNAME) {
-                    bemProps[name] = elements;
-                }
-                else {
+                if (isBlockUndefined && name === BEMPropTypes.CLASSNAME) {
                     bemProps.className = elements;
+                }
+                if (!isBlockUndefined) {
+                    bemProps[name] = elements;
                 }
 
                 if (name === BEMPropTypes.BLOCK && elements.length) {
@@ -156,7 +152,7 @@ const traverseJSXElementTree = (element: NodePath<JSXElement>, block: Block) => 
             if (types.isObjectExpression(expression) && name === BEMPropTypes.MODS) {
                 const { properties } = expression;
 
-                if (isObjectPropertyArray(properties)) {
+                if (isObjectPropertyArray(properties) && !isBlockUndefined) {
                     bemProps.mods = properties;
                 }
             }
