@@ -69,7 +69,6 @@ const traverseJSXElementTree = (element: NodePath<JSXElement>, block: Block) => 
         className: ''
     };
 
-    // TODO find best way to abort or log error when block inheritance is disabled
     if (bemProps.block && !bemProps.blockIsTopLevel && process.env.REACT_BEM_DISABLE_BLOCK_INHERITANCE) {
         handleUndefinedBlock(
             bemProps.block,
@@ -159,6 +158,10 @@ const traverseJSXElementTree = (element: NodePath<JSXElement>, block: Block) => 
         }
 
         attributeIndexesToRemove.push(index);
+
+        // if (process.env.REACT_BEM_DISABLE_BLOCK_INHERITANCE && process.env.BEM_JSX_FAIL_SILENTLY) {
+        //     console.log(isBlockUndefined)
+        // }
     });
 
     // Remove all attributes that were processed.
@@ -224,6 +227,13 @@ const handleUndefinedBlock = (block: string | StringLiteral[], htmlTagName: JSXI
         }, '');
     }
     else {
-        console.error(`Block is not defined on <${name}> at line ${line}, column ${column}. Inherited [${block}], but block inheritance is disabled.`);
+        const message = `Block is not defined on <${name}> at line ${line}, column ${column}. Inherited [${block}], but block inheritance is disabled.`;
+
+        if (process.env.BEM_JSX_FAIL_SILENTLY) {
+            console.error(message);
+        }
+        else {
+            throw Error(message);
+        }
     }
 }

@@ -41,5 +41,8 @@ const BlockInheritance = () => {
                 <div className={`Block0-Elem0 Block0-Elem1 Block0-Elem2 Block1-Elem0 Block1-Elem1 Block1-Elem2 Block2-Elem0 Block2-Elem1 Block2-Elem2 ${undefined !== NaN ? "Block0-Elem0_mods0" : ""}`} />
                 <div />
             </div>
+            <div className="SecondNestedBlock SecondNestedBlock-Elem" />
+            <div className="ThirdNestedBlock ThirdNestedBlock_thirdNestedBlockMod" />
+            <div />
         </div>;
 };

@@ -58,6 +58,53 @@ const getClassNames = (ast) => {
     return declarations.map(getDetails);
 }
 
+const generateFile = (directory, fileName, content) => {
+    fs.writeFile(
+        path.resolve(directory, fileName),
+        `${THIS_FILE_IS_GENERATED_AUTOMATICALLY}${content}`,
+        'utf-8',
+        () => { } // no-op
+    );
+}
+
+const testTransform = (output, expected, name) => {
+    const outputAst = babel.parseSync(output, CONFIG);
+    const expectedAst = babel.parseSync(expected, CONFIG);
+
+    const actualClassName = getClassNames(outputAst);
+    const expectedClassName = getClassNames(expectedAst);
+
+    it(name, () => {
+        expect(actualClassName).toEqual(expectedClassName);
+    });
+}
+
+const testInheritance = (fixtureDirectory, input) => {
+    process.env.BEM_JSX_FAIL_SILENTLY = "true";
+
+    process.env.REACT_BEM_DISABLE_BLOCK_INHERITANCE = "true";
+    const outputWithoutInheritance = babel.transformSync(input, CONFIG).code;
+    const expectedWithoutInheritance = fs.readFileSync(
+        path.resolve(fixtureDirectory, 'expected-no-inheritance.jsx'),
+        'utf-8'
+    );
+
+    process.env.REACT_BEM_DISABLE_BLOCK_INHERITANCE = "";
+    const outputWithInheritance = babel.transformSync(input, CONFIG).code;
+    const expectedWithInheritance = fs.readFileSync(
+        path.resolve(fixtureDirectory, 'expected-inheritance.jsx'),
+        'utf-8'
+    );
+
+    testTransform(outputWithoutInheritance, expectedWithoutInheritance, 'Block inheritance disabled → fail silently');
+    generateFile(fixtureDirectory, 'out-no-inheritance.jsx', outputWithoutInheritance);
+
+    // process.env.BEM_JSX_FAIL_SILENTLY = "";
+
+    testTransform(outputWithInheritance, expectedWithInheritance, 'Block inheritance enabled');
+    generateFile(fixtureDirectory, 'out-inheritance.jsx', outputWithInheritance);
+}
+
 describe('Transpilation process happens as expected', () => {
     const fixturesDirectory = path.resolve(__dirname, 'fixtures');
     const fixtures = fs.readdirSync(fixturesDirectory);
@@ -70,6 +117,12 @@ describe('Transpilation process happens as expected', () => {
             path.resolve(fixtureDirectory, 'in.jsx'),
             'utf-8'
         );
+
+        if (dirName.includes('inheritance')) {
+            testInheritance(fixtureDirectory, input);
+            return;
+        }
+
         const expected = fs.readFileSync(
             path.resolve(fixtureDirectory, 'expected.jsx'),
             'utf-8'
@@ -82,35 +135,7 @@ describe('Transpilation process happens as expected', () => {
         const actualClassName = getClassNames(outputAst);
         const expectedClassName = getClassNames(expectedAst);
 
-        fs.writeFile( // Generate expected output file
-            path.resolve(fixtureDirectory, 'out.jsx'),
-            `${THIS_FILE_IS_GENERATED_AUTOMATICALLY}${output}`,
-            'utf-8',
-            () => { }
-        );
-
-        if (dirName.includes('inheritance')) {
-            // set process.env...?
-            process.env.REACT_BEM_DISABLE_BLOCK_INHERITANCE = "true";
-            const outputWithoutInheritance = babel.transformSync(input, CONFIG).code;
-
-            fs.writeFile( // Generate expected output file
-                path.resolve(fixtureDirectory, 'out-no-inheritance.jsx'),
-                `${THIS_FILE_IS_GENERATED_AUTOMATICALLY}${outputWithoutInheritance}`,
-                'utf-8',
-                () => { }
-            );
-
-            process.env.REACT_BEM_DISABLE_BLOCK_INHERITANCE = "";
-            const outputWithInheritance = babel.transformSync(input, CONFIG).code;
-
-            fs.writeFile( // Generate expected output file
-                path.resolve(fixtureDirectory, 'out-inheritance.jsx'),
-                `${THIS_FILE_IS_GENERATED_AUTOMATICALLY}${outputWithInheritance}`,
-                'utf-8',
-                () => { }
-            );
-        }
+        generateFile(fixtureDirectory, 'out.jsx', output);
 
         it(dirName, () => {
             expect(actualClassName).toEqual(expectedClassName);

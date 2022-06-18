@@ -38,6 +38,9 @@ const BlockInheritance = () => {
                 <div elem={["Elem0", "Elem1", "Elem2"]} mods={{ mods0: undefined !== NaN }} />
                 <div />
             </div>
+            <div block="SecondNestedBlock" elem="Elem" />
+            <div block="ThirdNestedBlock" mods={{ thirdNestedBlockMod: true }} />
+            <div />
         </div>
     );
 }
