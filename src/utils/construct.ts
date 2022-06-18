@@ -132,9 +132,9 @@ export const construct = (bemProps: BEMProps) => {
     let _conditionalExpressions: ConditionalExpression[] = [];
 
     for (const block of constructBlock(bemProps)) {
-        if (!bemProps.blockIsTopLevel) { // Don't add 'block' if it's inherited
-            continue;
-        }
+        // if (!bemProps.blockIsTopLevel) { // Don't add 'block' if it's inherited
+        //     continue;
+        // }
 
         const SPACE = _block ? WHITESPACE : EMPTY;
         _block = `${_block}${SPACE}${block}`;

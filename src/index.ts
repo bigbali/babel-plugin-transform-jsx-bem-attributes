@@ -69,7 +69,7 @@ const traverseJSXElementTree = (element: NodePath<JSXElement>, block: Block) => 
         className: ''
     };
 
-    if (bemProps.block && !bemProps.blockIsTopLevel && process.env.REACT_BEM_DISABLE_BLOCK_INHERITANCE) {
+    if (bemProps.block && !bemProps.blockIsTopLevel && process.env.BEM_JSX_DISABLE_BLOCK_INHERITANCE) {
         handleUndefinedBlock(
             bemProps.block,
             htmlTagName as JSXIdentifier,
@@ -158,10 +158,6 @@ const traverseJSXElementTree = (element: NodePath<JSXElement>, block: Block) => 
         }
 
         attributeIndexesToRemove.push(index);
-
-        // if (process.env.REACT_BEM_DISABLE_BLOCK_INHERITANCE && process.env.BEM_JSX_FAIL_SILENTLY) {
-        //     console.log(isBlockUndefined)
-        // }
     });
 
     // Remove all attributes that were processed.
@@ -205,7 +201,7 @@ const log = (element: NodePath<JSXElement>) => {
     )
 }
 
-const handleUndefinedBlock = (block: string | StringLiteral[], htmlTagName: JSXIdentifier, location: SourceLocation) => {
+const handleUndefinedBlock = (block: Block, htmlTagName: JSXIdentifier, location: SourceLocation) => {
     const { name } = htmlTagName;
     const {
         start: {
@@ -217,23 +213,16 @@ const handleUndefinedBlock = (block: string | StringLiteral[], htmlTagName: JSXI
         }
     } = location || {};
 
-    if (isArray(block)) {
-        block = block.reduce((acc, { value }) => {
-            const SEPARATOR = (acc && value)
-                ? `${COMMA}${WHITESPACE}`
-                : EMPTY;
+    const reducer = (acc: string, value: StringLiteral) => {
+        const SEPARATOR = (acc && value)
+            ? `${COMMA}${WHITESPACE}`
+            : EMPTY;
 
-            return `${acc}${SEPARATOR}${value}`;
-        }, '');
+        return `${acc}${SEPARATOR}${value}`;
     }
-    else {
-        const message = `Block is not defined on <${name}> at line ${line}, column ${column}. Inherited [${block}], but block inheritance is disabled.`;
 
-        if (process.env.BEM_JSX_FAIL_SILENTLY) {
-            console.error(message);
-        }
-        else {
-            throw Error(message);
-        }
-    }
+    const blockString = isArray(block) ? block.reduce(reducer, EMPTY) : block;
+    const message = `Block is not defined on <${name}> at line ${line}, column ${column}. Inherited [${blockString}], but block inheritance is disabled.`;
+
+    throw Error(message);
 }
