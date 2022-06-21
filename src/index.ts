@@ -1,7 +1,8 @@
 import {
     NodePath,
-    PluginObj as Plugin
+    PluginObj as Plugin,
 } from '@babel/core';
+import * as babel from '@babel/core';
 import {
     JSXAttribute,
     JSXElement,
@@ -12,6 +13,7 @@ import {
 import {
     Attribute,
     BEMProps,
+    BEMProps2,
     BEMPropTypes,
     Block,
     isArray,
@@ -26,12 +28,14 @@ import {
 import construct from './utils/construct';
 import * as types from '@babel/types';
 
-export default function (): Plugin {
+export default function (Babel: typeof babel): Plugin {
+    const block = { value: EMPTY };
+
     return {
         name: 'transform-bem-props',
         visitor: {
-            JSXElement(element) {
-                traverseJSXElementTree(element, '');
+            JSXElement(element, state) {
+                traverseJSXElementTree(element, { value: EMPTY }, { value: EMPTY });
 
                 // Don't traverse child nodes, as we will do that manually
                 element.skip()
@@ -46,7 +50,7 @@ export default function (): Plugin {
  * @param block - The block name inherited from the parent element, which is passed down to the children
  *                until another 'block' attribute is found
  */
-const traverseJSXElementTree = (element: NodePath<JSXElement>, block: Block) => {
+const traverseJSXElementTree = (element: NodePath<JSXElement>, block: Block, prev: Block) => {
     const {
         node: {
             openingElement: {
@@ -63,7 +67,7 @@ const traverseJSXElementTree = (element: NodePath<JSXElement>, block: Block) => 
 
     let bemProps: BEMProps = {
         block,
-        blockIsTopLevel: false,
+        blockIsTopLevel: prev !== block,
         elem: '',
         mods: '',
         className: ''
@@ -73,7 +77,7 @@ const traverseJSXElementTree = (element: NodePath<JSXElement>, block: Block) => 
         handleUndefinedBlock(
             bemProps.block,
             htmlTagName as JSXIdentifier,
-            loc as SourceLocation
+            loc as SourceLocation,
         );
 
         isBlockUndefined = true;
@@ -96,7 +100,7 @@ const traverseJSXElementTree = (element: NodePath<JSXElement>, block: Block) => 
 
             // If we found a new 'block', we will pass it down to the next iteration
             if (name === BEMPropTypes.BLOCK && value) {
-                bemProps.block = value;
+                bemProps.block = { value };
                 bemProps.blockIsTopLevel = true;
             }
             // TODO: check for elem and mods also + refactor
@@ -107,7 +111,12 @@ const traverseJSXElementTree = (element: NodePath<JSXElement>, block: Block) => 
                     bemProps.className = value;
                 }
                 if (!isBlockUndefined) {
-                    bemProps[name] = value;
+                    if (name === BEMPropTypes.BLOCK) {
+                        bemProps.block = { value };
+                    }
+                    else {
+                        bemProps[name] = value;
+                    }
                 }
             }
         }
@@ -120,7 +129,7 @@ const traverseJSXElementTree = (element: NodePath<JSXElement>, block: Block) => 
                 const { value } = expression;
 
                 if (name === BEMPropTypes.BLOCK && value) {
-                    bemProps.block = value;
+                    bemProps.block = { value };
                     bemProps.blockIsTopLevel = true;
                 }
                 else {
@@ -128,7 +137,12 @@ const traverseJSXElementTree = (element: NodePath<JSXElement>, block: Block) => 
                         bemProps.className = value;
                     }
                     if (!isBlockUndefined) {
-                        bemProps[name] = value;
+                        if (name === BEMPropTypes.BLOCK) {
+                            bemProps.block = { value };
+                        }
+                        else {
+                            bemProps[name] = value;
+                        }
                     }
                 }
             }
@@ -140,7 +154,12 @@ const traverseJSXElementTree = (element: NodePath<JSXElement>, block: Block) => 
                     bemProps.className = elements;
                 }
                 if (!isBlockUndefined) {
-                    bemProps[name] = elements;
+                    if (name === BEMPropTypes.BLOCK) {
+                        bemProps.block = { value: elements };
+                    }
+                    else {
+                        bemProps[name] = elements;
+                    }
                 }
 
                 if (name === BEMPropTypes.BLOCK && elements.length) {
@@ -167,7 +186,12 @@ const traverseJSXElementTree = (element: NodePath<JSXElement>, block: Block) => 
         attributePaths[attributeIndex].remove();
     })
 
-    const classNameAttribute = construct(bemProps);
+    if (bemProps.block.value) { // TODO
+
+        // @ts-ignore
+        bemProps.block = bemProps.block.value;
+    }
+    const classNameAttribute = construct(bemProps as unknown as BEMProps2);
 
     // Check if the attribute is empty, and add it only if it is not
     if (classNameAttribute) {
@@ -184,7 +208,7 @@ const traverseJSXElementTree = (element: NodePath<JSXElement>, block: Block) => 
             return;
         }
 
-        traverseJSXElementTree(childElement as NodePath<JSXElement>, bemProps.block);
+        traverseJSXElementTree(childElement as NodePath<JSXElement>, bemProps.block, block);
     });
 };
 
@@ -210,18 +234,18 @@ const handleUndefinedBlock = (block: Block, htmlTagName: JSXIdentifier, location
         } = {
             line: 'unknown',
             column: 'unknown'
-        }
+        },
     } = location || {};
 
     const reducer = (acc: string, value: StringLiteral) => {
-        const SEPARATOR = (acc && value)
+        const SEPARATOR = (acc && value.value)
             ? `${COMMA}${WHITESPACE}`
             : EMPTY;
 
-        return `${acc}${SEPARATOR}${value}`;
+        return `${acc}${SEPARATOR}${value.value}`;
     }
 
-    const blockString = isArray(block) ? block.reduce(reducer, EMPTY) : block;
+    const blockString = isArray(block.value) ? block.value.reduce(reducer, EMPTY) : block.value;
     const message = `Block is not defined on <${name}> at line ${line}, column ${column}. Inherited [${blockString}], but block inheritance is disabled.`;
 
     throw Error(message);

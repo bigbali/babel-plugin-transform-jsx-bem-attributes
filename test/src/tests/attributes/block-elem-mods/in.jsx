@@ -1,6 +1,5 @@
 const BlockElemMods = () => {
     const isTrue = true;
-    const isFalse = false;
 
     return (
         <>
@@ -31,8 +30,6 @@ const BlockElemMods = () => {
             <div block="Block" elem={["Elem0", "Elem1", "Elem2"]} mods={{ isTrue, isTrue: isTrue }} />
             <div block="Block" elem={["Elem0", "Elem1", "Elem2"]} mods={{ trueExpression: true === true, falseExpression: true === false }} />
 
-            {/*  */}
-
             <div block={"Block"} elem="Elem" mods="Mods" />
             <div block={"Block"} elem="Elem" mods={"Mods"} />
             <div block={"Block"} elem="Elem" mods={["Mods0", "Mods1", "Mods2"]} />
@@ -59,8 +56,6 @@ const BlockElemMods = () => {
             <div block={"Block"} elem={["Elem0", "Elem1", "Elem2"]} mods={{ mods0: false, mods1: false }} />
             <div block={"Block"} elem={["Elem0", "Elem1", "Elem2"]} mods={{ isTrue, isTrue: isTrue }} />
             <div block={"Block"} elem={["Elem0", "Elem1", "Elem2"]} mods={{ trueExpression: true === true, falseExpression: true === false }} />
-
-            {/*  */}
 
             <div block={["Block0", "Block1", "Block2"]} elem="Elem" mods="Mods" />
             <div block={["Block0", "Block1", "Block2"]} elem="Elem" mods={"Mods"} />

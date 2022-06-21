@@ -1,4 +1,4 @@
-import { types, transformSync, parseSync } from '@babel/core';
+import { types, transformSync, transformFile, parseSync } from '@babel/core';
 import { readFileSync, writeFile } from 'fs';
 import { resolve } from 'path';
 
@@ -33,7 +33,13 @@ export const getDetails = (node) => {
                     if (types.isJSXElement(child)) {
                         for (const attribute of child.openingElement.attributes) {
                             if (attribute.name.name === 'className') {
-                                array.push(attribute.value.value)
+                                if (types.isStringLiteral(attribute.value)) {
+                                    array.push(attribute.value.value);
+                                }
+                                else if (types.isJSXExpressionContainer(attribute.value)) {
+                                    // normalizeTemplateLiteral(attribute.value.expression);
+                                    // array.push(attribute.value.expression);
+                                }
                             }
                         }
                     }
@@ -61,6 +67,7 @@ export const getClassNames = (directory, inputArg, expectedArg) => {
     const { input, expected } = getInputAndExpected(directory, inputArg, expectedArg);
 
     const { code: output } = transformSync(input, CONFIG);
+
     const outputAst = parseSync(output, CONFIG);
     const expectedAst = parseSync(expected, CONFIG);
 
@@ -90,4 +97,44 @@ export const getInputAndExpected = (directory, inputArg, expectedArg) => {
     );
 
     return { input, expected };
+}
+
+const normalizeTemplateLiteral = (templateLiteral) => {
+    // const expressions = templateLiteral.reduce((acc, expression) => {
+    //     const test = expression.test; 
+    // }, '')
+
+    deleteProperties(templateLiteral)
+
+    const expressions = templateLiteral.expressions;
+    expressions.forEach((expression) => {
+        // deleteProperties(expression);
+        traverseAndDeleteProperties(expression);
+    })
+}
+
+const deleteProperties = (object) => {
+    if ('loc' in object) {
+        delete object.loc;
+    }
+    if ('start' in object) {
+        delete object.start;
+    }
+    if ('end' in object) {
+        delete object.end;
+    }
+}
+
+const traverseAndDeleteProperties = (object) => {
+    if (types.isObjectExpression(object)) {
+        for (const propertyName in object) {
+            const property = object[propertyName];
+
+            deleteProperties(property);
+
+            if (types.isObjectProperty(property)) {
+                traverseAndDeleteProperties(property);
+            }
+        }
+    }
 }

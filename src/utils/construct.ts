@@ -1,9 +1,9 @@
 import { types } from '@babel/core';
 import { ConditionalExpression, Identifier, ObjectProperty, Expression } from '@babel/types';
 import { WHITESPACE, EMPTY, ELEM_CONNECTOR, MODS_CONNECTOR, PASSIVE } from '../constants';
-import { BEMProps, BEMPropTypes, isArray } from '../types';
+import { BEMProps, BEMProps2, BEMPropTypes, isArray } from '../types';
 
-export function* constructBlock({ block, blockIsTopLevel }: BEMProps) {
+export function* constructBlock({ block, blockIsTopLevel }: BEMProps2) {
     if (!block.length || !blockIsTopLevel) { // Don't need 'block' if it's inherited
         yield EMPTY;
     }
@@ -23,7 +23,7 @@ export function* constructBlock({ block, blockIsTopLevel }: BEMProps) {
     }
 };
 
-export function* constructElem(bemProps: BEMProps) {
+export function* constructElem(bemProps: BEMProps2) {
     const { block, elem } = bemProps;
 
     if (block.length === 0 || !elem || elem.length === 0) {
@@ -51,7 +51,7 @@ export function* constructElem(bemProps: BEMProps) {
     }
 };
 
-export function* constructMods(bemProps: BEMProps) {
+export function* constructMods(bemProps: BEMProps2) {
     const { elem, mods } = bemProps;
 
     if (!mods || (!elem?.length && !mods?.length)) {
@@ -63,44 +63,66 @@ export function* constructMods(bemProps: BEMProps) {
         ? constructElem(bemProps)
         : constructBlock(bemProps);
 
+    let prefixes: string[] = [];
+
     for (const prefix of modsPrefixIterator) {
-        if (isArray(mods)) {
-            if (!prefix) {
-                continue;
+        prefixes.push(prefix)
+    }
+
+    if (isArray(mods)) {
+        for (const mod of mods) {
+            if (types.isStringLiteral(mod) && mod.value) {
+                yield prefixes.reduce((acc, prefix) => {
+                    const SPACE_AFTER_ACC = acc && prefix
+                        ? WHITESPACE
+                        : EMPTY;
+
+                    return prefix
+                        ? `${acc}${SPACE_AFTER_ACC}${prefix}${MODS_CONNECTOR}${mod.value}`
+                        : EMPTY;
+                }, EMPTY);
             }
 
-            for (const mod of mods) {
-                if (types.isStringLiteral(mod) && prefix) {
-                    if (!mod.value) {
-                        continue;
-                    }
+            if (types.isObjectProperty(mod)) {
+                const { key, value } = mod as { key: Identifier, value: Expression };
 
-                    yield `${prefix}${MODS_CONNECTOR}${mod.value}`;
+                // When the right hand side of the object property is a boolean and is false,
+                // omit it altogether
+                if (types.isBooleanLiteral(value) && !value.value) {
+                    continue;
                 }
 
-                if (types.isObjectProperty(mod)) {
-                    const { key, value } = mod as { key: Identifier, value: Expression };
+                yield prefixes.reduce((acc, prefix) => {
+                    const SPACE_AFTER_ACC = acc && prefix
+                        ? WHITESPACE
+                        : EMPTY;
 
-                    // When the right hand side of the object property is a boolean and is false,
-                    // there is no point in yielding it
-                    if (types.isBooleanLiteral(value) && !value.value) {
-                        continue;
-                    }
-
-                    yield `${prefix}${MODS_CONNECTOR}${key.name}`;
-                }
+                    return prefix
+                        ? `${acc}${SPACE_AFTER_ACC}${prefix}${MODS_CONNECTOR}${key.name}`
+                        : EMPTY;
+                }, EMPTY);
             }
         }
+    }
 
-        if (prefix && typeof mods === 'string') {
-            yield `${prefix}${MODS_CONNECTOR}${mods}`;
-        }
+
+    if (prefixes.length && typeof mods === 'string') {
+        yield prefixes.reduce((acc, prefix) => {
+            const SPACE_AFTER_ACC = acc && prefix
+                ? WHITESPACE
+                : EMPTY;
+
+            return prefix
+                ? `${acc}${SPACE_AFTER_ACC}${prefix}${MODS_CONNECTOR}${mods}`
+                : EMPTY;
+
+        }, EMPTY)
     }
 
     return EMPTY;
 }
 
-export const constructClassName = (bemProps: BEMProps) => {
+export const constructClassName = (bemProps: BEMProps2) => {
     const { className } = bemProps;
 
     if (!className) {
@@ -124,7 +146,7 @@ export const constructClassName = (bemProps: BEMProps) => {
     return className;
 }
 
-export const construct = (bemProps: BEMProps) => {
+export const construct = (bemProps: BEMProps2) => {
     let _block = EMPTY;
     let _elem = EMPTY;
     let _mods = EMPTY;
@@ -163,7 +185,7 @@ export const construct = (bemProps: BEMProps) => {
                     continue;
                 }
 
-                const conditionalExpression = getConditionalExpression(mod, modsIterator);
+                const conditionalExpression = getConditionalExpression(mod, bemProps.mods.length, modsIterator);
 
                 if (!conditionalExpression) {
                     continue;
@@ -218,10 +240,16 @@ export const construct = (bemProps: BEMProps) => {
     );
 }
 
-const getConditionalExpression = (mod: ObjectProperty, modsIterator: any) => {
+const getConditionalExpression = (mod: ObjectProperty, length: number, modsIterator: any) => {
     if (!mod) {
         return;
     }
+
+    // let modValue = EMPTY;
+
+    // for (let index = 0; index < length; index++) {
+    //     modValue = `${modValue}${WHITESPACE}${modsIterator.next().value}`
+    // }
 
     const modValue = modsIterator.next().value;
 

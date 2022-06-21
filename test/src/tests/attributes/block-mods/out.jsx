@@ -28,12 +28,12 @@ const BlockMods = () => {
 
             <div className="Block0 Block1 Block2 Block0_Mods Block1_Mods Block2_Mods" />
             <div className="Block0 Block1 Block2 Block0_Mods Block1_Mods Block2_Mods" />
-            <div className="Block0 Block1 Block2 Block0_Mods0 Block0_Mods1 Block0_Mods2 Block1_Mods0 Block1_Mods1 Block1_Mods2 Block2_Mods0 Block2_Mods1 Block2_Mods2" />
-            <div className="Block0 Block1 Block2 Block0_mods0 Block0_mods1 Block1_mods0 Block1_mods1 Block2_mods0 Block2_mods1" />
+            <div className="Block0 Block1 Block2 Block0_Mods0 Block1_Mods0 Block2_Mods0 Block0_Mods1 Block1_Mods1 Block2_Mods1 Block0_Mods2 Block1_Mods2 Block2_Mods2" />
+            <div className="Block0 Block1 Block2 Block0_mods0 Block1_mods0 Block2_mods0 Block0_mods1 Block1_mods1 Block2_mods1" />
             <div className="Block0 Block1 Block2 Block0_mods0 Block1_mods0 Block2_mods0" />
             <div className="Block0 Block1 Block2" />
-            <div className={`Block0 Block1 Block2 ${isTrue ? "Block0_isTrue" : ""}${isTrue ? "Block0_isTrue" : ""}`} />
-            <div className={`Block0 Block1 Block2 ${isFalse ? "Block0_isFalse" : ""}${isFalse ? "Block0_isFalse" : ""}`} />
+            <div className={`Block0 Block1 Block2 ${isTrue ? "Block0_isTrue Block1_isTrue Block2_isTrue" : ""}${isTrue ? "Block0_isTrue Block1_isTrue Block2_isTrue" : ""}`} />
+            <div className={`Block0 Block1 Block2 ${isFalse ? "Block0_isFalse Block1_isFalse Block2_isFalse" : ""}${isFalse ? "Block0_isFalse Block1_isFalse Block2_isFalse" : ""}`} />
 
             <div className="Block" />
             <div className="Block" />

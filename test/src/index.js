@@ -1,4 +1,4 @@
-import { transformSync, parseSync } from '@babel/core';
+import { transformSync, transformFileSync, parseSync } from '@babel/core';
 import { readFileSync } from 'fs';
 import { parse, resolve } from 'path';
 import { getClassNames, generateFile, getInAndExpected, CONFIG } from './utils';
@@ -41,8 +41,9 @@ function testBlockInheritance(featuresDirectory, featurePath) {
     });
 
     it('Does not throw and transpiles correctly when block inheritance is disabled and is used properly', () => {
-        const { actualClassName, expectedClassName } = getClassNames(resolve(featuresDirectory, featurePath), 'in-no-inheritance.jsx', 'expected-no-inheritance.jsx');
+        const { actualClassName, expectedClassName, output } = getClassNames(resolve(featuresDirectory, featurePath), 'in-no-inheritance.jsx', 'expected-no-inheritance.jsx');
 
+        generateFile(resolve(featuresDirectory, featurePath), 'out-no-inheritance.jsx', output)
         expect(actualClassName).toEqual(expectedClassName);
     });
 
