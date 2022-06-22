@@ -1,4 +1,4 @@
-const BlockNoInheritanceShouldThrow = () => {
+const BlockNoInheritanceShouldThrowIfNoBlockInheritance = () => {
     const isTrue = true;
 
     return (

@@ -3,7 +3,7 @@
     All your edits will be lost upon regeneration.
 */
 
-const BlockInheritance = () => {
+const BlockNoInheritance = () => {
   const isTrue = true;
   return <div className="Block">
             <div className="Block Block-Elem" />

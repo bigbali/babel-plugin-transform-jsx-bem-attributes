@@ -1,10 +1,10 @@
 import { types } from '@babel/core';
 import { ConditionalExpression, Identifier, ObjectProperty, Expression } from '@babel/types';
 import { WHITESPACE, EMPTY, ELEM_CONNECTOR, MODS_CONNECTOR, PASSIVE } from '../constants';
-import { BEMProps, BEMProps2, BEMPropTypes, isArray } from '../types';
+import { BEMProps, BEMPropTypes, isArray } from '../types';
 
-export function* constructBlock({ block, blockIsTopLevel }: BEMProps2) {
-    if (!block.length || !blockIsTopLevel) { // Don't need 'block' if it's inherited
+export function* constructBlock({ block }: BEMProps) {
+    if (!block.length) {
         yield EMPTY;
     }
 
@@ -23,7 +23,7 @@ export function* constructBlock({ block, blockIsTopLevel }: BEMProps2) {
     }
 };
 
-export function* constructElem(bemProps: BEMProps2) {
+export function* constructElem(bemProps: BEMProps) {
     const { block, elem } = bemProps;
 
     if (block.length === 0 || !elem || elem.length === 0) {
@@ -51,7 +51,7 @@ export function* constructElem(bemProps: BEMProps2) {
     }
 };
 
-export function* constructMods(bemProps: BEMProps2) {
+export function* constructMods(bemProps: BEMProps) {
     const { elem, mods } = bemProps;
 
     if (!mods || (!elem?.length && !mods?.length)) {
@@ -122,7 +122,7 @@ export function* constructMods(bemProps: BEMProps2) {
     return EMPTY;
 }
 
-export const constructClassName = (bemProps: BEMProps2) => {
+export const constructClassName = (bemProps: BEMProps) => {
     const { className } = bemProps;
 
     if (!className) {
@@ -146,7 +146,7 @@ export const constructClassName = (bemProps: BEMProps2) => {
     return className;
 }
 
-export const construct = (bemProps: BEMProps2) => {
+export const construct = (bemProps: BEMProps) => {
     let _block = EMPTY;
     let _elem = EMPTY;
     let _mods = EMPTY;
@@ -154,10 +154,6 @@ export const construct = (bemProps: BEMProps2) => {
     let _conditionalExpressions: ConditionalExpression[] = [];
 
     for (const block of constructBlock(bemProps)) {
-        // if (!bemProps.blockIsTopLevel) { // Don't add 'block' if it's inherited
-        //     continue;
-        // }
-
         const SPACE = _block ? WHITESPACE : EMPTY;
         _block = `${_block}${SPACE}${block}`;
     }

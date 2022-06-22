@@ -7,7 +7,7 @@ import {
     isObjectProperty
 } from '@babel/types';
 
-export type Block = { value: string | StringLiteral[] };
+export type Block = string | StringLiteral[];
 export type Elem = string | StringLiteral[];
 export type Mods = string | StringLiteral[] | ObjectProperty[];
 export type ClassName = string | StringLiteral[];
@@ -17,16 +17,7 @@ export interface BEMProps {
     elem?: Elem;
     mods?: Mods;
     className?: ClassName;
-    blockIsTopLevel: boolean;
 };
-export interface BEMProps2 {
-    block: string | StringLiteral[];
-    elem?: Elem;
-    mods?: Mods;
-    className?: ClassName;
-    blockIsTopLevel: boolean;
-};
-
 export interface Attribute {
     value: StringLiteral | JSXExpressionContainer,
     name: {

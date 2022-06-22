@@ -1,4 +1,4 @@
-const BlockInheritance = () => {
+const BlockNoInheritance = () => {
     const isTrue = true;
 
     return (

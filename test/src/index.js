@@ -29,9 +29,9 @@ export const testFeature = (featuresDirectory, featurePath) => {
 }
 
 function testBlockInheritance(featuresDirectory, featurePath) {
-    process.env.BEM_JSX_DISABLE_BLOCK_INHERITANCE = 'true';
-
     it('Throws error upon attempt to rely on block inheritance while it is disabled', () => {
+        process.env.BEM_JSX_DISABLE_BLOCK_INHERITANCE = 'true';
+
         const input = readFileSync(
             resolve(featuresDirectory, featurePath, 'in-no-inheritance-should-throw.jsx'),
             'utf-8'
@@ -41,16 +41,39 @@ function testBlockInheritance(featuresDirectory, featurePath) {
     });
 
     it('Does not throw and transpiles correctly when block inheritance is disabled and is used properly', () => {
-        const { actualClassName, expectedClassName, output } = getClassNames(resolve(featuresDirectory, featurePath), 'in-no-inheritance.jsx', 'expected-no-inheritance.jsx');
+        process.env.BEM_JSX_DISABLE_BLOCK_INHERITANCE = 'true';
+
+        const {
+            actualClassName,
+            expectedClassName,
+            output
+        } = getClassNames(
+            resolve(featuresDirectory, featurePath),
+            'in-no-inheritance.jsx',
+            'expected-no-inheritance.jsx'
+        );
 
         generateFile(resolve(featuresDirectory, featurePath), 'out-no-inheritance.jsx', output)
         expect(actualClassName).toEqual(expectedClassName);
     });
 
-    // const featureDirectory = resolve(featuresDirectory, featurePath);
-    // const { name: dirName } = parse(featurePath);
 
+    it('Does not throw and transpiles correctly when block inheritance is enabled', () => {
+        process.env.BEM_JSX_DISABLE_BLOCK_INHERITANCE = '';
 
+        const {
+            actualClassName,
+            expectedClassName,
+            output
+        } = getClassNames(
+            resolve(featuresDirectory, featurePath),
+            'in-no-inheritance-should-throw.jsx',
+            'expected-inheritance.jsx'
+        );
+
+        generateFile(resolve(featuresDirectory, featurePath), 'out-inheritance.jsx', output)
+        expect(actualClassName).toEqual(expectedClassName);
+    });
 }
 
 function testCustomConnectors() {
