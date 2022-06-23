@@ -1,7 +1,21 @@
 import { types } from '@babel/core';
-import { ConditionalExpression, Identifier, ObjectProperty, Expression } from '@babel/types';
-import { WHITESPACE, EMPTY, ELEM_CONNECTOR, MODS_CONNECTOR, PASSIVE } from '../constants';
-import { BEMProps, BEMPropTypes, isArray } from '../types';
+import {
+    ConditionalExpression,
+    Identifier,
+    ObjectProperty,
+    Expression
+} from '@babel/types';
+import {
+    WHITESPACE,
+    EMPTY,
+    ELEM_CONNECTOR,
+    MODS_CONNECTOR
+} from '../constants';
+import {
+    BEMProps,
+    BEMPropTypes,
+    isArray
+} from '../types';
 
 export function* constructBlock({ block }: BEMProps) {
     if (!block.length) {
@@ -41,12 +55,12 @@ export function* constructElem(bemProps: BEMProps) {
                     continue;
                 }
 
-                yield `${_block}${ELEM_CONNECTOR}${_elem}`;
+                yield `${_block}${ELEM_CONNECTOR()}${_elem}`;
             }
         }
 
         if (typeof elem === 'string' && elem) {
-            yield `${_block}${ELEM_CONNECTOR}${elem}`;
+            yield `${_block}${ELEM_CONNECTOR()}${elem}`;
         }
     }
 };
@@ -78,7 +92,7 @@ export function* constructMods(bemProps: BEMProps) {
                         : EMPTY;
 
                     return prefix
-                        ? `${acc}${SPACE_AFTER_ACC}${prefix}${MODS_CONNECTOR}${mod.value}`
+                        ? `${acc}${SPACE_AFTER_ACC}${prefix}${MODS_CONNECTOR()}${mod.value}`
                         : EMPTY;
                 }, EMPTY);
             }
@@ -98,7 +112,7 @@ export function* constructMods(bemProps: BEMProps) {
                         : EMPTY;
 
                     return prefix
-                        ? `${acc}${SPACE_AFTER_ACC}${prefix}${MODS_CONNECTOR}${key.name}`
+                        ? `${acc}${SPACE_AFTER_ACC}${prefix}${MODS_CONNECTOR()}${key.name}`
                         : EMPTY;
                 }, EMPTY);
             }
@@ -113,7 +127,7 @@ export function* constructMods(bemProps: BEMProps) {
                 : EMPTY;
 
             return prefix
-                ? `${acc}${SPACE_AFTER_ACC}${prefix}${MODS_CONNECTOR}${mods}`
+                ? `${acc}${SPACE_AFTER_ACC}${prefix}${MODS_CONNECTOR()}${mods}`
                 : EMPTY;
 
         }, EMPTY)
@@ -240,12 +254,6 @@ const getConditionalExpression = (mod: ObjectProperty, length: number, modsItera
     if (!mod) {
         return;
     }
-
-    // let modValue = EMPTY;
-
-    // for (let index = 0; index < length; index++) {
-    //     modValue = `${modValue}${WHITESPACE}${modsIterator.next().value}`
-    // }
 
     const modValue = modsIterator.next().value;
 

@@ -20,6 +20,7 @@ import {
 import {
     BEM_PROP_TYPES,
     COMMA,
+    DISABLE_BLOCK_INHERITANCE,
     EMPTY,
     WHITESPACE
 } from './constants';
@@ -30,7 +31,7 @@ export default function (): Plugin {
     return {
         name: 'transform-bem-props',
         visitor: {
-            JSXElement(element, state) {
+            JSXElement(element, state) { // state unused, have plans for it
                 traverseJSXElementTree(element, EMPTY);
 
                 // Don't traverse child nodes, as we will do that manually
@@ -57,7 +58,6 @@ const traverseJSXElementTree = (element: NodePath<JSXElement>, block: Block) => 
         }
     } = element;
 
-    const attributePaths = element.get('openingElement.attributes') as NodePath<JSXAttribute>[];
     let attributeIndexesToRemove: number[] = [];
     let hasFoundBlock = false;
 
@@ -134,7 +134,7 @@ const traverseJSXElementTree = (element: NodePath<JSXElement>, block: Block) => 
 
     // If there was no new 'block' defined on the element, but 'elem' or 'mods' were
     if (!hasFoundBlock && (bemProps.elem || bemProps.mods)
-        && process.env.BEM_JSX_DISABLE_BLOCK_INHERITANCE) {
+        && DISABLE_BLOCK_INHERITANCE()) {
         handleUndefinedBlock(
             bemProps.block,
             htmlTagName as JSXIdentifier,
@@ -145,6 +145,7 @@ const traverseJSXElementTree = (element: NodePath<JSXElement>, block: Block) => 
     // Remove all attributes that were processed.
     // The reason for not removing it directly in the loop
     // is that it messes up the indexes of the attributes, leading to skipped elements.
+    const attributePaths = element.get('openingElement.attributes') as NodePath<JSXAttribute>[];
     attributeIndexesToRemove.forEach(attributeIndex => {
         attributePaths[attributeIndex].remove();
     })
@@ -189,12 +190,14 @@ const handleUndefinedBlock = (block: Block, htmlTagName: JSXIdentifier, location
         return `${acc}${SEPARATOR}${value.value}`;
     }
 
+    // We might not have 'inheritedBlock'
+    // TODO: this + inaccessible file name (transformFileSync?)
     const inheritedBlock = isArray(block)
         ? block.reduce(reducer, EMPTY)
         : block;
     const inheritedMessage = inheritedBlock
         ? `Inherited [${inheritedBlock}], but block inheritance is disabled.`
-        : 'Did not inherit from parent.'
+        : 'Did not inherit from parent.';
 
     const message = `Block is not defined on <${name}> at line ${line}, column ${column}. ${inheritedMessage}`;
 

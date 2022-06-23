@@ -1,7 +1,12 @@
-import { transformSync, transformFileSync, parseSync } from '@babel/core';
+import { transformSync, parseSync } from '@babel/core';
 import { readFileSync } from 'fs';
 import { parse, resolve } from 'path';
-import { getClassNames, generateFile, getInAndExpected, CONFIG } from './utils';
+import {
+    getClassNames,
+    getClassName,
+    generateFile,
+    CONFIG
+} from './utils';
 
 const TEST_MAP = {
     blockinheritance: testBlockInheritance,
@@ -76,5 +81,41 @@ function testBlockInheritance(featuresDirectory, featurePath) {
     });
 }
 
-function testCustomConnectors() {
+function testCustomConnectors(featuresDirectory, featurePath) {
+    const connectors = [
+        { elem: '___', mods: '|/=' },
+        { elem: '999', mods: '678' },
+        { elem: '', mods: '' },
+        {
+            elem: 'LONGSTRINGOFJIBBERISH, ABSOLUTE TOTAL JIBBERISH',
+            mods: 'LONGSTRINGOFJUBBERFISH, ABSOLUTE TOTAL JUBBERFISH'
+        }
+    ];
+
+    connectors.forEach((c) => {
+        it(`Correctly uses \'connectors\' when they are specified: ${JSON.stringify(c)}`, () => {
+            process.env.BEM_JSX_ELEM_CONNECTOR = c.elem;
+            process.env.BEM_JSX_MODS_CONNECTOR = c.mods;
+
+            const input = readFileSync(
+                resolve(featuresDirectory, featurePath, 'in.jsx'),
+                'utf-8'
+            );
+            const expected = readFileSync(
+                resolve(featuresDirectory, featurePath, 'expected.jsx'),
+                'utf-8'
+            );
+
+            const { code: outputCode } = transformSync(input, CONFIG);
+            const expectedCode = expected.replace(/\[ELEM\]/g, c.elem).replace(/\[MODS\]/g, c.mods);
+
+            const outputAst = parseSync(outputCode, CONFIG);
+            const expectedAst = parseSync(expectedCode, CONFIG);
+
+            const actualClassName = getClassName(outputAst);
+            const expectedClassName = getClassName(expectedAst);
+
+            expect(actualClassName).toEqual(expectedClassName);
+        })
+    })
 }

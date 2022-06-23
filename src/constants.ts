@@ -11,8 +11,6 @@ export const WHITESPACE = ' ';
 export const EMPTY = '';
 export const COMMA = ',';
 
-// Node.js environment variables
-export const PASSIVE = process.env.REACT_BEM_MODE_PASSIVE;
-export const DISABLE_BLOCK_INHERITANCE = process.env.REACT_BEM_DISABLE_BLOCK_INHERITANCE || false;
-export const ELEM_CONNECTOR = process.env.REACT_BEM_ELEM_CONNECTOR || '-';
-export const MODS_CONNECTOR = process.env.REACT_BEM_MODS_CONNECTOR || '_';
+export const DISABLE_BLOCK_INHERITANCE = () => process.env.BEM_JSX_DISABLE_BLOCK_INHERITANCE || false;
+export const ELEM_CONNECTOR = () => process.env.BEM_JSX_ELEM_CONNECTOR ?? '-';
+export const MODS_CONNECTOR = () => process.env.BEM_JSX_MODS_CONNECTOR ?? '_';
