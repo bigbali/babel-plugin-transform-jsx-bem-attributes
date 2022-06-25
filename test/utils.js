@@ -1,11 +1,11 @@
-import { types, transformSync, transformFile, parseSync } from '@babel/core';
+import { types, transformSync, parseSync } from '@babel/core';
 import { readFileSync, writeFile } from 'fs';
 import { resolve } from 'path';
 
 export const CONFIG = {
     plugins: [
         '@babel/plugin-syntax-jsx',
-        require.resolve('../../dist/index.js')
+        require.resolve('../dist/index.js')
     ]
 };
 
@@ -39,6 +39,7 @@ export const getDetails = (node) => {
                                 else if (types.isJSXExpressionContainer(attribute.value)) {
                                     // normalizeTemplateLiteral(attribute.value.expression);
                                     // array.push(attribute.value.expression);
+                                    // TODO: check if this is needed
                                 }
                             }
                         }

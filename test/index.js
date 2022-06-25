@@ -1,6 +1,6 @@
 import { transformSync, parseSync } from '@babel/core';
-import { readFileSync } from 'fs';
-import { parse, resolve } from 'path';
+import { readFileSync, readdirSync } from 'fs';
+import path, { parse, resolve } from 'path';
 import {
     getClassNames,
     getClassName,
@@ -13,7 +13,24 @@ const TEST_MAP = {
     customconnectors: testCustomConnectors
 };
 
-export const testAttribute = (attributesDirectory, attributePath) => {
+describe('Transpilation process happens as expected', () => {
+    const testsDirectory = path.resolve(__dirname, 'tests');
+    const attributesDirectory = path.resolve(testsDirectory, 'attributes');
+    const featuresDirectory = path.resolve(testsDirectory, 'features');
+
+    const attributeTests = readdirSync(attributesDirectory);
+    const featureTests = readdirSync(featuresDirectory);
+
+    attributeTests.forEach((attributePath) => {
+        testAttribute(attributesDirectory, attributePath);
+    });
+
+    featureTests.forEach((featurePath) => {
+        testFeature(featuresDirectory, featurePath);
+    });
+});
+
+export function testAttribute(attributesDirectory, attributePath) {
     const attributeDirectory = resolve(attributesDirectory, attributePath);
     const { name: dirName } = parse(attributePath);
 
@@ -26,7 +43,7 @@ export const testAttribute = (attributesDirectory, attributePath) => {
     });
 }
 
-export const testFeature = (featuresDirectory, featurePath) => {
+export function testFeature(featuresDirectory, featurePath) {
     const dirName = parse(featurePath).name;
     const key = dirName.replace('-', '');
 

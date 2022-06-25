@@ -1,7 +1,7 @@
 {
-    "name": "babel-plugin-transform-jsx-bem-props",
-    "version": "0.0.3",
-    "description": "A Babel plugin for transforming BEM props into 'className'",
+    "name": "babel-plugin-transform-jsx-bem",
+    "version": "1.0.0",
+    "description": "A Babel plugin for transforming 'block', 'elem' and 'mods' attributes into a proper 'className'",
     "homepage": "https://github.com/bigbali/babel-plugin-transform-jsx-bem-props/",
     "repository": {
         "type": "git",
@@ -17,7 +17,7 @@
     ],
     "main": "dist/index.js",
     "scripts": {
-        "build": "yarn run tsc && cd test && babel ./src/index.js -d ./dist",
+        "build": "yarn run tsc",
         "test": "yarn build && yarn jest"
     },
     "author": "Balázs Burján",
@@ -25,12 +25,12 @@
     "dependencies": {
         "@babel/core": "^7.17.9",
         "@babel/preset-env": "^7.18.2",
-        "@babel/preset-react": "^7.16.7",
-        "@types/babel__core": "^7.1.19"
+        "@babel/preset-react": "^7.16.7"
     },
     "devDependencies": {
         "@babel/cli": "^7.17.6",
         "@babel/plugin-syntax-jsx": "^7.16.7",
+        "@types/babel__core": "^7.1.19",
         "@types/jest": "^27.5.1",
         "@types/node": "^17.0.31",
         "babel-jest": "^28.1.0",
@@ -40,6 +40,7 @@
     "jest": {
         "transform": {
             "^.+\\.(js|jsx)$": "babel-jest"
-        }
+        },
+        "testRegex": "/test/index.js"
     }
 }
