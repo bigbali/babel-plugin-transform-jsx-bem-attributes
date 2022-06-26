@@ -24,7 +24,7 @@ import {
     EMPTY,
     WHITESPACE
 } from './constants';
-import construct from './utils/construct';
+import construct from './construct';
 import * as types from '@babel/types';
 
 export default function (): Plugin {
@@ -44,8 +44,7 @@ export default function (): Plugin {
 /**
  * Recursively traverses the JSXElement tree and constructs the 'className' attribute
  * @param element - The JSXElement to recursively traverse
- * @param block - The block name inherited from the parent element, which is passed down to the children
- *                until another 'block' attribute is found
+ * @param block - Recursively passed to the next iteration to allow block inheritance
  */
 const traverseJSXElementTree = (element: NodePath<JSXElement>, block: Block) => {
     const {
@@ -190,8 +189,6 @@ const handleUndefinedBlock = (block: Block, htmlTagName: JSXIdentifier, location
         return `${acc}${SEPARATOR}${value.value}`;
     }
 
-    // We might not have 'inheritedBlock'
-    // TODO: this + inaccessible file name (transformFileSync?)
     const inheritedBlock = isArray(block)
         ? block.reduce(reducer, EMPTY)
         : block;

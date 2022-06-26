@@ -30,7 +30,7 @@ describe('Transpilation process happens as expected', () => {
     });
 });
 
-export function testAttribute(attributesDirectory, attributePath) {
+function testAttribute(attributesDirectory, attributePath) {
     const attributeDirectory = resolve(attributesDirectory, attributePath);
     const { name: dirName } = parse(attributePath);
 
@@ -43,7 +43,7 @@ export function testAttribute(attributesDirectory, attributePath) {
     });
 }
 
-export function testFeature(featuresDirectory, featurePath) {
+function testFeature(featuresDirectory, featurePath) {
     const dirName = parse(featurePath).name;
     const key = dirName.replace('-', '');
 

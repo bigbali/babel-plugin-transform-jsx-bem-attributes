@@ -10,12 +10,12 @@ import {
     EMPTY,
     ELEM_CONNECTOR,
     MODS_CONNECTOR
-} from '../constants';
+} from './constants';
 import {
     BEMProps,
     BEMPropTypes,
     isArray
-} from '../types';
+} from './types';
 
 export function* constructBlock({ block }: BEMProps) {
     if (!block.length) {
