@@ -1,51 +1,74 @@
-# A plugin for Babel that allows converting props into 'className'
-### Currently in experimental stage. Probably should not use it just yet.
+# A plugin for Babel that allows converting 'block', 'elem' and 'mods' props into proper 'className'
 
 ## What this plugin does:
-- it converts 'block', 'elem' and 'mods' attributes to 'className' which allows for dynamic classes using template literals and conditional expressions
-- Well, yes, this is actually all it does.
+It converts 'block', 'elem' and 'mods' attributes into 'className', which allows for dynamic classes using template literals and conditional expressions.
 
 ## How to use:
-- block: string → this will be the base used to construct the class
-- elem:  string → appended to a duplicate of block, separated by a separator of your choosing
-- mods:  string | object → if string, no template literal will be created, only a static string. However, if it's an object, every property will be added to a conditional expression and the property name will be used as modifier name
-- className: string → the original 'className' will be appended with the above
-### Examples:
+- block: string | string[] → this will be the base used to construct the class
+- elem:  string | string[] → appended to block; requires block to be defined
+- mods:  string | string[] | object → if is an object, template literals will be created using the properties; requires block to be defined
+- className: string | string[] → will be appended to the previously constructed class
+## Configuration:
 
-    <div block="block" />
-    <div block="block" elem="element" />
-    <div block="block" elem="element" mods={{ modifier: true }} />
-    <div className="beautiful-className" block="block" elem="element" mods={{ modifier: true }} />
+You can provide these environment variables:
+- BEM_JSX_DISABLE_BLOCK_INHERITANCE → set this to any truthy string to disable passing 'block' down from parent to child (in this case, you will have to define 'block' on each JSX element)
+- BEM_JSX_ELEM_CONNECTOR → use this to connect 'elem' to 'block'. Default: '-'.
+- BEM_JSX_MODS_CONNECTOR → use this to connect 'mods' to 'elem'. Default: '_'.
 
-                                ↓ becomes ↓
+You can set these in your Webpack config, like this:
 
-    <div className="block" />
-    <div className="block block-element" />
-    <div className={`block block-element ${modifier: true ? 'block-element_modifier' : ''}`} />
-    <div className={`beautiful-className block block-element ${modifier: true ? 'block-element_modifier' : ''}`} />
-
-### What sense does this possibly make?
-
-It makes it very easy to use the BEM methodology.
-In your styles you can do magic such as:
-
-    .block {
-        ...
-
-        &-elem {
-            display: none;
-            ...
-
-            &_isActive {
-                display: block;
+    plugins: [
+        new webpack.DefinePlugin({
+            'process.env': {
+                BEM_JSX_DISABLE_BLOCK_INHERITANCE: 'true',
+                BEM_JSX_ELEM_CONNECTOR: '§',
+                BEM_JSX_MODS_CONNECTOR: '~'
             }
+        })
+    ]
 
-            &_hasRandomProperty {
-                background-color: red;
+## What sense could this possibly make?
+
+It makes it very easy to build classes using the BEM methodology.
+Consider this:
+JSX: \
+&nbsp;&nbsp;&nbsp;&nbsp;Input:
+
+    <div block="Block">
+        <div elem="Elem" mods={ isBlue: shouldColorBeBlue === true } />;
+    </div>
+
+&nbsp;&nbsp;&nbsp;&nbsp;Output:
+
+    <div className="Block">
+        <div className={`Block Block-Elem ${ shouldColorBeBlue === true ? "Block-Elem_isBlue" : "" }`} />;
+    </div>
+
+SASS:
+
+    .Block {
+        height: 640px;
+        background-color: yellow;
+
+        &-Elem {
+            padding: 48px;
+            background-color: red;
+
+            &_isBlue {
+                background-color: blue;
             }
         }
     }
 
-You could argue that it makes the classes unnecessarily long, increasing the overall file size, and yes, that is the tradeoff.
+### Note:
+
+You can easily do the following, but it's probably not a good idea:
+
+    <div block={["Block0", "Block1", "Block2"]} elem={["Elem0", "Elem1", "Elem2"]} />
+&nbsp;&nbsp;↓
+
+    <div className="Block0 Block1 Block2 Block0-Elem0 Block0-Elem1 Block0-Elem2 Block1-Elem0 Block1-Elem1 Block1-Elem2 Block2-Elem0 Block2-Elem1 Block2-Elem2" />
+
+#### If you notice any errors or have any suggestions, feel free to reach out.
 
 

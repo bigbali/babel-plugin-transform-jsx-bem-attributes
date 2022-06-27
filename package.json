@@ -1,11 +1,11 @@
 {
-    "name": "babel-plugin-transform-jsx-bem-props",
-    "version": "0.0.3",
-    "description": "A Babel plugin for transforming BEM props into 'className'",
-    "homepage": "https://github.com/bigbali/babel-plugin-transform-jsx-bem-props/",
+    "name": "babel-plugin-transform-jsx-bem-attributes",
+    "version": "1.0.1",
+    "description": "A Babel plugin for transforming 'block', 'elem' and 'mods' attributes into a proper 'className'",
+    "homepage": "https://github.com/bigbali/babel-plugin-transform-jsx-bem-attributes/",
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/bigbali/babel-plugin-transform-jsx-bem-props.git"
+        "url": "git+https://github.com/bigbali/babel-plugin-transform-jsx-bem-attributes.git"
     },
     "keywords": [
         "babel",
@@ -17,20 +17,24 @@
     ],
     "main": "dist/index.js",
     "scripts": {
-        "test": "yarn run build && cd test && babel ./src/index.js -d ./dist",
-        "build": "yarn run tsc"
+        "build": "yarn run tsc",
+        "test": "yarn build && yarn jest"
     },
     "author": "Balázs Burján",
     "license": "MIT",
     "dependencies": {
-        "@babel/core": "^7.17.9",
-        "@types/babel__core": "^7.1.19"
+        "@babel/preset-env": "^7.18.2",
+        "@babel/plugin-syntax-jsx": "^7.16.7",
+        "@babel/core": "^7.17.9"
     },
     "devDependencies": {
-        "@babel/cli": "^7.17.6",
-        "@babel/plugin-syntax-jsx": "^7.16.7",
-        "@babel/preset-react": "^7.16.7",
+        "@types/babel__core": "^7.1.19",
+        "@types/jest": "^27.5.1",
         "@types/node": "^17.0.31",
+        "jest": "^28.1.0",
         "typescript": "^4.6.3"
+    },
+    "jest": {
+        "testRegex": "/test/index.js"
     }
 }
