@@ -1,14 +1,15 @@
-import {
+import type {
     NodePath,
     PluginObj as Plugin,
 } from '@babel/core';
-import {
+import type {
     JSXAttribute,
-    JSXElement,
+    // JSXElement,
     JSXIdentifier,
     StringLiteral,
     SourceLocation
 } from '@babel/types';
+import * as types from '@babel/types';
 import {
     Attribute,
     BEMProps,
@@ -25,7 +26,6 @@ import {
     WHITESPACE
 } from './constants';
 import construct from './construct';
-import * as types from '@babel/types';
 
 export default function (): Plugin {
     return {
@@ -46,7 +46,7 @@ export default function (): Plugin {
  * @param element - The JSXElement to recursively traverse
  * @param block - Recursively passed to the next iteration to allow block inheritance
  */
-const traverseJSXElementTree = (element: NodePath<JSXElement>, block: Block) => {
+const traverseJSXElementTree = (element: NodePath<babel.types.JSXElement>, block: Block) => {
     const {
         node: {
             openingElement: {
@@ -137,7 +137,7 @@ const traverseJSXElementTree = (element: NodePath<JSXElement>, block: Block) => 
         handleUndefinedBlock(
             bemProps.block,
             htmlTagName as JSXIdentifier,
-            loc as SourceLocation,
+            loc as SourceLocation
         );
     }
 
@@ -149,7 +149,7 @@ const traverseJSXElementTree = (element: NodePath<JSXElement>, block: Block) => 
         attributePaths[attributeIndex].remove();
     })
 
-    const classNameAttribute = construct(bemProps);
+    const classNameAttribute = construct(bemProps) as babel.types.JSXAttribute;
 
     if (classNameAttribute) {
         const { value } = classNameAttribute;
@@ -165,7 +165,7 @@ const traverseJSXElementTree = (element: NodePath<JSXElement>, block: Block) => 
             return;
         }
 
-        traverseJSXElementTree(childElement as NodePath<JSXElement>, bemProps.block);
+        traverseJSXElementTree(childElement as NodePath<babel.types.JSXElement>, bemProps.block);
     });
 };
 

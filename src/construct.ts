@@ -1,4 +1,4 @@
-import { types } from '@babel/core';
+import * as types from '@babel/types';
 import {
     ConditionalExpression,
     Identifier,
@@ -195,7 +195,7 @@ export const construct = (bemProps: BEMProps) => {
                     continue;
                 }
 
-                const conditionalExpression = getConditionalExpression(mod, bemProps.mods.length, modsIterator);
+                const conditionalExpression = getConditionalExpression(mod, modsIterator);
 
                 if (!conditionalExpression) {
                     continue;
@@ -250,7 +250,7 @@ export const construct = (bemProps: BEMProps) => {
     );
 }
 
-const getConditionalExpression = (mod: ObjectProperty, length: number, modsIterator: any) => {
+const getConditionalExpression = (mod: ObjectProperty, modsIterator: any) => {
     if (!mod) {
         return;
     }
