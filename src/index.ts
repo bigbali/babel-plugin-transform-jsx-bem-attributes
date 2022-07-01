@@ -4,7 +4,6 @@ import type {
 } from '@babel/core';
 import type {
     JSXAttribute,
-    // JSXElement,
     JSXIdentifier,
     StringLiteral,
     SourceLocation
@@ -31,7 +30,7 @@ export default function (): Plugin {
     return {
         name: 'transform-bem-props',
         visitor: {
-            JSXElement(element, state) { // state unused, have plans for it
+            JSXElement(element) {
                 traverseJSXElementTree(element, EMPTY);
 
                 // Don't traverse child nodes, as we will do that manually
@@ -44,7 +43,7 @@ export default function (): Plugin {
 /**
  * Recursively traverses the JSXElement tree and constructs the 'className' attribute
  * @param element - The JSXElement to recursively traverse
- * @param block - Recursively passed to the next iteration to allow block inheritance
+ * @param block - Passed to the next iteration to allow block inheritance
  */
 const traverseJSXElementTree = (element: NodePath<babel.types.JSXElement>, block: Block) => {
     const {
