@@ -36,7 +36,7 @@ export const isObjectPropertyArray = (
     properties: (ObjectMethod | ObjectProperty | SpreadElement)[]
 ): properties is ObjectProperty[] => {
     return properties.every(property => isObjectProperty(property));
-}
+};
 
 export const isArray = Array.isArray;
 

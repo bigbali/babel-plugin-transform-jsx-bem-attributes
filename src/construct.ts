@@ -73,14 +73,14 @@ export function* constructMods(bemProps: BEMProps) {
     }
 
     // If we have 'elem', use that, otherwise use 'block'
-    let modsPrefixIterator = elem?.length
+    const modsPrefixIterator = elem?.length
         ? constructElem(bemProps)
         : constructBlock(bemProps);
 
-    let prefixes: string[] = [];
+    const prefixes: string[] = [];
 
     for (const prefix of modsPrefixIterator) {
-        prefixes.push(prefix)
+        prefixes.push(prefix);
     }
 
     if (isArray(mods)) {
@@ -119,7 +119,6 @@ export function* constructMods(bemProps: BEMProps) {
         }
     }
 
-
     if (prefixes.length && typeof mods === 'string') {
         yield prefixes.reduce((acc, prefix) => {
             const SPACE_AFTER_ACC = acc && prefix
@@ -130,7 +129,7 @@ export function* constructMods(bemProps: BEMProps) {
                 ? `${acc}${SPACE_AFTER_ACC}${prefix}${MODS_CONNECTOR()}${mods}`
                 : EMPTY;
 
-        }, EMPTY)
+        }, EMPTY);
     }
 
     return EMPTY;
@@ -158,14 +157,14 @@ export const constructClassName = (bemProps: BEMProps) => {
     }
 
     return className;
-}
+};
 
 export const construct = (bemProps: BEMProps) => {
+    const _className = constructClassName(bemProps);
+    const _conditionalExpressions: ConditionalExpression[] = [];
     let _block = EMPTY;
     let _elem = EMPTY;
     let _mods = EMPTY;
-    let _className = constructClassName(bemProps);
-    let _conditionalExpressions: ConditionalExpression[] = [];
 
     for (const block of constructBlock(bemProps)) {
         const SPACE = _block ? WHITESPACE : EMPTY;
@@ -248,9 +247,9 @@ export const construct = (bemProps: BEMProps) => {
             types.stringLiteral(CLASS_NAME)
         )
     );
-}
+};
 
-const getConditionalExpression = (mod: ObjectProperty, modsIterator: any) => {
+const getConditionalExpression = (mod: ObjectProperty, modsIterator: Generator<string, string, string>) => {
     if (!mod) {
         return;
     }
@@ -266,6 +265,6 @@ const getConditionalExpression = (mod: ObjectProperty, modsIterator: any) => {
         types.stringLiteral(modValue),
         types.stringLiteral(EMPTY)
     );
-}
+};
 
 export default construct;

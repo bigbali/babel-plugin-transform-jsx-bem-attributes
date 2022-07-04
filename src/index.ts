@@ -34,7 +34,7 @@ export default function (): Plugin {
                 traverseJSXElementTree(element, EMPTY);
 
                 // Don't traverse child nodes, as we will do that manually
-                element.skip()
+                element.skipKey('children');
             }
         }
     };
@@ -56,15 +56,15 @@ const traverseJSXElementTree = (element: NodePath<babel.types.JSXElement>, block
         }
     } = element;
 
-    let attributeIndexesToRemove: number[] = [];
-    let hasFoundBlock = false;
-
-    let bemProps: BEMProps = {
+    const attributeIndexesToRemove: number[] = [];
+    const bemProps: BEMProps = {
         block,
         elem: EMPTY,
         mods: EMPTY,
         className: EMPTY
     };
+
+    let hasFoundBlock = false;
 
     attributes.forEach((attribute, index) => {
         const {
@@ -146,7 +146,7 @@ const traverseJSXElementTree = (element: NodePath<babel.types.JSXElement>, block
     const attributePaths = element.get('openingElement.attributes') as NodePath<JSXAttribute>[];
     attributeIndexesToRemove.forEach(attributeIndex => {
         attributePaths[attributeIndex].remove();
-    })
+    });
 
     const classNameAttribute = construct(bemProps) as babel.types.JSXAttribute;
 
@@ -186,7 +186,7 @@ const handleUndefinedBlock = (block: Block, htmlTagName: JSXIdentifier, location
             : EMPTY;
 
         return `${acc}${SEPARATOR}${value.value}`;
-    }
+    };
 
     const inheritedBlock = isArray(block)
         ? block.reduce(reducer, EMPTY)
@@ -198,4 +198,4 @@ const handleUndefinedBlock = (block: Block, htmlTagName: JSXIdentifier, location
     const message = `Block is not defined on <${name}> at line ${line}, column ${column}. ${inheritedMessage}`;
 
     throw Error(message);
-}
+};

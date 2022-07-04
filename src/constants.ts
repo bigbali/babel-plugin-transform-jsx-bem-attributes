@@ -1,4 +1,4 @@
-import { BEMPropTypes } from "./types";
+import { BEMPropTypes } from './types';
 
 export const BEM_PROP_TYPES: string[] = [
     BEMPropTypes.BLOCK,

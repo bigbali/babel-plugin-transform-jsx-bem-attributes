@@ -1,6 +1,6 @@
 {
     "name": "babel-plugin-transform-jsx-bem-attributes",
-    "version": "1.0.2",
+    "version": "1.0.3",
     "description": "A Babel plugin for transforming 'block', 'elem' and 'mods' attributes into a proper 'className'",
     "homepage": "https://github.com/bigbali/babel-plugin-transform-jsx-bem-attributes/",
     "repository": {
@@ -15,7 +15,7 @@
         "props",
         "transform"
     ],
-    "main": "dist/index.js",
+    "main": "lib/index.js",
     "scripts": {
         "build": "yarn run tsc",
         "test": "yarn build && yarn jest"
@@ -32,8 +32,11 @@
         "@types/babel__core": "^7.1.19",
         "@types/jest": "^28.1.3",
         "@types/node": "^18.0.0",
-        "jest": "^28.1.2",
-        "typescript": "^4.7.4"
+        "@typescript-eslint/eslint-plugin": "^5.30.0",
+        "@typescript-eslint/parser": "^5.30.0",
+        "typescript": "^4.7.4",
+        "eslint": "^8.18.0",
+        "jest": "^28.1.2"
     },
     "jest": {
         "testRegex": "/test/index.js"
