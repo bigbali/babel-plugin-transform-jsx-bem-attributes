@@ -1,6 +1,6 @@
 {
     "name": "babel-plugin-transform-jsx-bem-attributes",
-    "version": "1.0.3",
+    "version": "1.1.0",
     "description": "A Babel plugin for transforming 'block', 'elem' and 'mods' attributes into a proper 'className'",
     "homepage": "https://github.com/bigbali/babel-plugin-transform-jsx-bem-attributes/",
     "repository": {
