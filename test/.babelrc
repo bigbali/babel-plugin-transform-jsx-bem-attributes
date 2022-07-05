@@ -4,6 +4,6 @@
     ],
     "plugins": [
         "@babel/plugin-syntax-jsx",
-        "../dist/index"
+        "../lib/index"
     ]
 }

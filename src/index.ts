@@ -148,7 +148,24 @@ const traverseJSXElementTree = (element: NodePath<babel.types.JSXElement>, block
         attributePaths[attributeIndex].remove();
     });
 
-    const classNameAttribute = construct(bemProps) as babel.types.JSXAttribute;
+    // When block inheritance is disabled, we will need to have defined on every line a new block,
+    // therefore hasFoundBlock would be always true. So, to correctly check if block is top level,
+    // compare the newly assigned block to the one from the previous iteration.
+    // (if they match => they are the same, which means we have in fact *not* found a new block)
+    // If you are trying to understand what is happening below, please forgive me :|
+    const isBlockTopLevelEvaluation = typeof bemProps.block === 'string'
+        ? (hasFoundBlock && bemProps.block !== block)
+        : isArray(bemProps.block) && isArray(block) // When both are arrays, compare them
+            ? hasFoundBlock && JSON.stringify(bemProps.block) === JSON.stringify(block)
+            : ( // When they have differing types, we know block is top level
+                isArray(bemProps.block) && typeof block === 'string'
+                || isArray(block) && typeof bemProps.block === 'string'
+            );
+
+    const isBlockTopLevel = DISABLE_BLOCK_INHERITANCE()
+        ? isBlockTopLevelEvaluation || (!block && hasFoundBlock)
+        : hasFoundBlock;
+    const classNameAttribute = construct(bemProps, isBlockTopLevel) as babel.types.JSXAttribute;
 
     if (classNameAttribute) {
         const { value } = classNameAttribute;
@@ -159,7 +176,7 @@ const traverseJSXElementTree = (element: NodePath<babel.types.JSXElement>, block
         }
     }
 
-    element.get('children').forEach(childElement => {
+    element.get('children').forEach(childElement => { // Here happens the recursive traversal
         if (!types.isJSXElement(childElement)) {
             return;
         }

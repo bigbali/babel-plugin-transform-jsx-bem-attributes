@@ -17,8 +17,12 @@ import {
     isArray
 } from './types';
 
-export function* constructBlock({ block }: BEMProps) {
-    if (!block.length) {
+export function* constructBlock({ block }: BEMProps, shouldSkip?: boolean) {
+    if (shouldSkip) {
+        return;
+    }
+
+    if (!block.length || shouldSkip) {
         yield EMPTY;
     }
 
@@ -65,8 +69,12 @@ export function* constructElem(bemProps: BEMProps) {
     }
 };
 
-export function* constructMods(bemProps: BEMProps) {
+export function* constructMods(bemProps: BEMProps, isBlockTopLevel: boolean) {
     const { elem, mods } = bemProps;
+
+    if (!isBlockTopLevel && !elem?.length) {
+        return EMPTY;
+    }
 
     if (!mods || (!elem?.length && !mods?.length)) {
         return EMPTY;
@@ -107,7 +115,7 @@ export function* constructMods(bemProps: BEMProps) {
                 }
 
                 yield prefixes.reduce((acc, prefix) => {
-                    const SPACE_AFTER_ACC = acc && prefix
+                    const SPACE_AFTER_ACC: string = acc && prefix
                         ? WHITESPACE
                         : EMPTY;
 
@@ -159,16 +167,18 @@ export const constructClassName = (bemProps: BEMProps) => {
     return className;
 };
 
-export const construct = (bemProps: BEMProps) => {
+export const construct = (bemProps: BEMProps, isBlockTopLevel: boolean) => {
     const _className = constructClassName(bemProps);
     const _conditionalExpressions: ConditionalExpression[] = [];
     let _block = EMPTY;
     let _elem = EMPTY;
     let _mods = EMPTY;
 
-    for (const block of constructBlock(bemProps)) {
-        const SPACE = _block ? WHITESPACE : EMPTY;
-        _block = `${_block}${SPACE}${block}`;
+    if (isBlockTopLevel) { // If block is inherited, we don't want it in the className by itself
+        for (const block of constructBlock(bemProps, !isBlockTopLevel)) {
+            const SPACE = _block ? WHITESPACE : EMPTY;
+            _block = `${_block}${SPACE}${block}`;
+        }
     }
 
     for (const elem of constructElem(bemProps)) {
@@ -176,13 +186,13 @@ export const construct = (bemProps: BEMProps) => {
         _elem = `${_elem}${SPACE}${elem}`;
     }
 
-    for (const mod of constructMods(bemProps)) {
+    for (const mod of constructMods(bemProps, isBlockTopLevel)) {
         const SPACE = _mods ? WHITESPACE : EMPTY;
         _mods = `${_mods}${SPACE}${mod}`;
     }
 
     if (isArray(bemProps.mods)) {
-        const modsIterator = constructMods(bemProps);
+        const modsIterator = constructMods(bemProps, isBlockTopLevel);
 
         for (const mod of bemProps.mods) {
             if (types.isObjectProperty(mod)) {

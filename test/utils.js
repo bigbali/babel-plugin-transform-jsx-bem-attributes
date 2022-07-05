@@ -5,7 +5,7 @@ import { resolve } from 'path';
 export const CONFIG = {
     plugins: [
         '@babel/plugin-syntax-jsx',
-        require.resolve('../dist/index.js')
+        require.resolve('../lib/index.js')
     ]
 };
 
@@ -37,9 +37,9 @@ export const getDetails = (node) => {
                                     array.push(attribute.value.value);
                                 }
                                 else if (types.isJSXExpressionContainer(attribute.value)) {
+                                    // TODO: find best way to compare objects :)
                                     // normalizeTemplateLiteral(attribute.value.expression);
                                     // array.push(attribute.value.expression);
-                                    // TODO: check if this is needed
                                 }
                             }
                         }
