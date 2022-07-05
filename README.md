@@ -1,5 +1,7 @@
 # A plugin for Babel that allows converting 'block', 'elem' and 'mods' props into proper 'className'
 
+# Note: this documentation needs to be updated!
+
 ## What this plugin does:
 It converts 'block', 'elem' and 'mods' attributes into 'className', which allows for dynamic classes using template literals and conditional expressions.
 
