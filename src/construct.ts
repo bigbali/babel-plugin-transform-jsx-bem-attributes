@@ -1,3 +1,4 @@
+// @ts-nocheck
 import * as types from '@babel/types';
 import {
     ConditionalExpression,

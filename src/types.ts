@@ -4,19 +4,22 @@ import {
     StringLiteral,
     JSXExpressionContainer,
     SpreadElement,
-    isObjectProperty
+    isObjectProperty,
+    TemplateLiteral,
+    CallExpression
 } from '@babel/types';
 
-export type Block = string | StringLiteral[];
-export type Elem = string | StringLiteral[];
-export type Mods = string | StringLiteral[] | (ObjectProperty | ObjectMethod)[];
-export type ClassName = string | StringLiteral[];
+export type BEMBaseAttribute = null | string | StringLiteral[] | TemplateLiteral | CallExpression;
+export type Block = BEMBaseAttribute;
+export type Elem = BEMBaseAttribute;
+export type Mods = BEMBaseAttribute | (ObjectProperty | ObjectMethod)[];
+export type ClassName = BEMBaseAttribute;
 
 export interface BEMProps {
     block: Block;
-    elem?: Elem;
-    mods?: Mods;
-    className?: ClassName;
+    elem: Elem;
+    mods: Mods;
+    className: ClassName;
 };
 export interface Attribute {
     value: StringLiteral | JSXExpressionContainer,
