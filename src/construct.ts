@@ -76,7 +76,8 @@ export function* constructMods(bemProps: BEMProps, isBlockTopLevel: boolean) {
         return EMPTY;
     }
 
-    if (!mods || (!elem?.length && !mods?.length)) {
+    // If mods is empty string or
+    if (!mods || (!elem?.length && !(mods?.length || Object.keys(mods).length))) {
         return EMPTY;
     }
 
@@ -106,7 +107,12 @@ export function* constructMods(bemProps: BEMProps, isBlockTopLevel: boolean) {
             }
 
             if (types.isObjectProperty(mod)) {
-                const { key, value } = mod as { key: Identifier, value: Expression };
+                const { key, value } = mod;
+                const modName = types.isIdentifier(key)
+                    ? key.name
+                    : types.isStringLiteral(key)
+                        ? key.value
+                        : EMPTY;
 
                 // When the right hand side of the object property is a boolean and is false,
                 // omit it altogether
@@ -120,7 +126,7 @@ export function* constructMods(bemProps: BEMProps, isBlockTopLevel: boolean) {
                         : EMPTY;
 
                     return prefix
-                        ? `${acc}${SPACE_AFTER_ACC}${prefix}${MODS_CONNECTOR()}${key.name}`
+                        ? `${acc}${SPACE_AFTER_ACC}${prefix}${MODS_CONNECTOR()}${modName}`
                         : EMPTY;
                 }, EMPTY);
             }

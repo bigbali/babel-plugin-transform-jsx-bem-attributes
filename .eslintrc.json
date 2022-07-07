@@ -9,19 +9,22 @@
         "plugin:@typescript-eslint/recommended",
         "plugin:@typescript-eslint/recommended-requiring-type-checking"
     ],
+    "ignorePatterns": [
+        "lib",
+        "test"
+    ],
     "env": {
+        "browser": true,
         "node": true,
         "es6": true
     },
     "parserOptions": {
-        "ecmaVersion": "latest",
+        "sourceType": "module",
+        "ecmaVersion": 2022,
         "project": [
-            "./tsconfig.json"
+            "tsconfig.json"
         ]
     },
-    "ignorePatterns": [
-        "test"
-    ],
     "rules": {
         "linebreak-style": 0,
         "comma-dangle": 0,

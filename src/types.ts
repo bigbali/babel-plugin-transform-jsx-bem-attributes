@@ -9,7 +9,7 @@ import {
 
 export type Block = string | StringLiteral[];
 export type Elem = string | StringLiteral[];
-export type Mods = string | StringLiteral[] | ObjectProperty[];
+export type Mods = string | StringLiteral[] | (ObjectProperty | ObjectMethod)[];
 export type ClassName = string | StringLiteral[];
 
 export interface BEMProps {

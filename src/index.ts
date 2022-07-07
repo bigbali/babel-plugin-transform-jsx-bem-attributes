@@ -6,7 +6,9 @@ import type {
     JSXAttribute,
     JSXIdentifier,
     StringLiteral,
-    SourceLocation
+    SourceLocation,
+    ObjectProperty,
+    ObjectMethod
 } from '@babel/types';
 import * as types from '@babel/types';
 import {
@@ -121,10 +123,16 @@ const traverseJSXElementTree = (element: NodePath<babel.types.JSXElement>, block
             if (types.isObjectExpression(expression) && name === BEMPropTypes.MODS) {
                 const { properties } = expression;
 
-                if (isObjectPropertyArray(properties)) {
-                    bemProps.mods = properties;
-                }
+                bemProps.mods = properties as (ObjectProperty | ObjectMethod)[];
             }
+
+            // if (types.isCallExpression(expression)) {
+            //     const { properties } = expression;
+            //     if (isObjectPropertyArray(properties)) {
+            //         bemProps.mods = properties;
+            //     }
+
+            // }
         }
 
         attributeIndexesToRemove.push(index);
@@ -144,9 +152,11 @@ const traverseJSXElementTree = (element: NodePath<babel.types.JSXElement>, block
     // The reason for not removing it directly in the loop
     // is that it messes up the indexes of the attributes, leading to skipped elements.
     const attributePaths = element.get('openingElement.attributes') as NodePath<JSXAttribute>[];
-    attributeIndexesToRemove.forEach(attributeIndex => {
-        attributePaths[attributeIndex].remove();
-    });
+    if ((bemProps.block && hasFoundBlock) || bemProps.elem || bemProps.mods) {
+        attributeIndexesToRemove.forEach(attributeIndex => {
+            attributePaths[attributeIndex].remove();
+        });
+    }
 
     // When block inheritance is disabled, we will need to have defined on every line a new block,
     // therefore hasFoundBlock would be always true. So, to correctly check if block is top level,

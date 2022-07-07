@@ -2,13 +2,24 @@
     "compilerOptions": {
         "target": "es6",
         "module": "commonjs",
+        "moduleResolution": "Node16",
         "lib": [
             "es2020",
             "dom"
         ],
         "outDir": "./lib",
-        "rootDir": "./src",
+        "rootDir": ".",
+        "forceConsistentCasingInFileNames": true,
         "strict": true,
-        "esModuleInterop": true
-    }
+        "esModuleInterop": true,
+        "declaration": true,
+        "baseUrl": "./"
+    },
+    "include": [
+        "src",
+        "index.d.ts"
+    ],
+    "exclude": [
+        "lib",
+    ],
 }

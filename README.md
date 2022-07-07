@@ -2,6 +2,20 @@
 
 # Note: this documentation needs to be updated!
 
+## TypeScript
+If you are going to be using this plugin with TypeScript, you'll need a `<filename>.d.ts` file, in which you will have declared at the top of the file:
+    
+    /// <reference types="babel-plugin-transform-jsx-bem-attributes" />
+
+The file name does not matter, as long as the compiler knows about it.
+If it does not, try this in your `tsconfig.json`:
+
+    "include": [
+        ...,
+        "<path-to-your-declaration-file>"
+    ]
+
+Without this, you'll need to add the types manually, or TypeScript will complain!
 ## What this plugin does:
 It converts 'block', 'elem' and 'mods' attributes into 'className', which allows for dynamic classes using template literals and conditional expressions.
 

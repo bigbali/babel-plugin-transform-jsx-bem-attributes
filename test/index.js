@@ -59,7 +59,7 @@ function testBlockInheritance(featuresDirectory, featurePath) {
             'utf-8'
         );
 
-        expect(() => { transformSync(input, CONFIG) }).toThrow();
+        expect(() => { transformSync(input, CONFIG); }).toThrow();
     });
 
     it('Does not throw and transpiles correctly when block inheritance is disabled and is used properly', () => {
@@ -75,7 +75,7 @@ function testBlockInheritance(featuresDirectory, featurePath) {
             'expected-no-inheritance.jsx'
         );
 
-        generateFile(resolve(featuresDirectory, featurePath), 'out-no-inheritance.jsx', output)
+        generateFile(resolve(featuresDirectory, featurePath), 'out-no-inheritance.jsx', output);
         expect(actualClassName).toEqual(expectedClassName);
     });
 
@@ -93,7 +93,7 @@ function testBlockInheritance(featuresDirectory, featurePath) {
             'expected-inheritance.jsx'
         );
 
-        generateFile(resolve(featuresDirectory, featurePath), 'out-inheritance.jsx', output)
+        generateFile(resolve(featuresDirectory, featurePath), 'out-inheritance.jsx', output);
         expect(actualClassName).toEqual(expectedClassName);
     });
 }
@@ -133,6 +133,6 @@ function testCustomConnectors(featuresDirectory, featurePath) {
             const expectedClassName = getClassName(expectedAst);
 
             expect(actualClassName).toEqual(expectedClassName);
-        })
-    })
+        });
+    });
 }
