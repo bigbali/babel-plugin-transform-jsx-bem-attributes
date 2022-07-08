@@ -9,6 +9,6 @@ export const App = () => {
             <span elem="Elem" mods={{ m1: true }} />
             <span elem="Elem" mods={{ m1: func() }} />
             <span elem={["E1", "E2"]} mods="Mods" />
-        </div>
+        </div >
     );
 }

@@ -19,23 +19,43 @@ import {
     BEMPropTypes,
     Block,
     isArray,
-    isObjectPropertyArray
+    // isObjectPropertyArray
 } from './types';
 import {
     BEM_PROP_TYPES,
-    COMMA,
-    DISABLE_BLOCK_INHERITANCE,
-    EMPTY,
-    WHITESPACE
+    // EMPTY
 } from './constants';
-import construct from './construct';
 
-export default function (): Plugin {
+type Options = {
+    allowStringLiteral: boolean,
+    allowTemplateLiteral: boolean,
+    allowArrayExpression: boolean,
+    allowCallExpression: boolean,
+    allowObjectExpression: boolean,
+    allowIdentifier: boolean
+};
+
+const DEFAULT_OPTIONS: Options = {
+    allowStringLiteral: true,
+    allowTemplateLiteral: true,
+    allowArrayExpression: true,
+    allowCallExpression: true,
+    allowObjectExpression: true,
+    allowIdentifier: false
+};
+
+let OPTIONS = DEFAULT_OPTIONS;
+
+export default function transformJSXBEMAttributes(): Plugin {
     return {
-        name: 'transform-bem-props',
+        name: 'transform-jsx-bem-attributes',
         visitor: {
-            JSXElement(element) {
-                traverseJSXElementTree(element, EMPTY);
+            JSXElement(element, { opts }) {
+                OPTIONS = {
+                    ...DEFAULT_OPTIONS,
+                    ...opts
+                };
+                traverseJSXElementTree(element, null);
 
                 // Don't traverse child nodes, as we will do that manually
                 element.skipKey('children');
@@ -51,7 +71,7 @@ export default function (): Plugin {
  */
 const traverseJSXElementTree = (element: NodePath<types.JSXElement>, block: Block) => {
     const openingElement = element.get('openingElement');
-    const attributePaths = openingElement.get('attributes');
+    const attrPaths = openingElement.get('attributes');
 
     const BEM_PROPS: BEMProps = {
         block,
@@ -60,25 +80,29 @@ const traverseJSXElementTree = (element: NodePath<types.JSXElement>, block: Bloc
         className: null
     };
 
-    let hasFoundBlock = false;
+    // let hasFoundBlock = false;
 
-    const assignValue = <T>(attrName: keyof BEMProps, attrValue: T, attrKey?: keyof T) => {
+    const assignValue = <T>(attrName: keyof BEMProps, attrValue: T, attrKey?: keyof T, attrPath?: NodePath<types.JSXElement>) => {
         const value = attrKey ? attrValue[attrKey] : attrValue;
 
         if ((isArray(value) && value.length) || value) { // @ts-ignore
             BEM_PROPS[attrName] = value;
 
             if (attrName === BEMPropTypes.BLOCK) {
-                hasFoundBlock = true;
+                // hasFoundBlock = true;
             }
+
+            return true;
         }
+
+        attrPath && throwError(attrPath.buildCodeFrameError('Empty array or falsy value was passed in.'));
     };
 
-    attributePaths.forEach((attributePath, index) => {
-        const { node } = attributePath;
+    attrPaths.forEach(attrPath => {
+        const { node } = attrPath;
 
         if (types.isJSXSpreadAttribute(node)) {
-            throw attributePath.buildCodeFrameError('Spread attributes are not supported.');
+            throwError(attrPath.buildCodeFrameError('Spread attributes are not supported.'));
         }
 
         const {
@@ -93,28 +117,42 @@ const traverseJSXElementTree = (element: NodePath<types.JSXElement>, block: Bloc
         }
 
         if (types.isStringLiteral(attrValue)) {
-            assignValue(attrName, attrValue, 'value');
+            OPTIONS.allowStringLiteral && assignValue(attrName, attrValue) || throwError(attrPath.buildCodeFrameError(
+                'You tried to use a string literal as a value, but \'allowStringLiteral\' is explicitly set to false.'
+            ));
         }
 
         if (types.isJSXExpressionContainer(attrValue)) {
             const { expression } = attrValue;
 
             if (types.isStringLiteral(expression)) {
-                assignValue(attrName, expression, 'value');
-            } else if (types.isArrayExpression(expression)) {
-                assignValue(attrName, expression, 'elements');
+                OPTIONS.allowStringLiteral && assignValue(attrName, expression) || throwError(attrPath.buildCodeFrameError(
+                    'You tried to use a string literal as a value, but \'allowStringLiteral\' is explicitly set to false.'
+                ));
             } else if (types.isCallExpression(expression)) {
-                assignValue(attrName, expression);
+                OPTIONS.allowCallExpression && assignValue(attrName, expression) || throwError(attrPath.buildCodeFrameError(
+                    'You tried to use a function call expression as a value, but \'allowCallExpression\' is explicitly set to false.'
+                ));
             } else if (types.isTemplateLiteral(expression)) {
-                assignValue(attrName, expression);
+                OPTIONS.allowTemplateLiteral && assignValue(attrName, expression) || throwError(attrPath.buildCodeFrameError(
+                    'You tried to use a template literal as a value, but \'allowTemplateLiteral\' is explicitly set to false.'
+                ));
+            } else if (types.isArrayExpression(expression)) {
+                OPTIONS.allowArrayExpression && assignValue(attrName, expression) || throwError(attrPath.buildCodeFrameError(
+                    'You tried to use an array expression as a value, but \'allowArrayExpression\' is explicitly set to false.'
+                ));
+            } else if (types.isIdentifier(expression)) {
+                OPTIONS.allowIdentifier && assignValue(attrName, expression) || throwError(attrPath.buildCodeFrameError(
+                    `You tried to use an identifier as a value, but 'allowIdentifier' is set to false.
+                    To enable it, pass "allowIdentifier": true as a plugin option.`
+                ));
+            } else if (types.isObjectExpression(expression) && attrName === BEMPropTypes.MODS) {
+                OPTIONS.allowObjectExpression && assignValue(attrName, expression, 'properties')
+                    || throwError(attrPath.buildCodeFrameError(
+                        'You tried to use an object expression as a value, but \'allowObjectExpression\' is explicitly set to false.'
+                    ));
             } else {
-                throw attributePath.buildCodeFrameError('This attribute value is unsupported.');
-            }
-
-            if (attrName === BEMPropTypes.MODS) {
-                if (types.isObjectExpression(expression)) {
-                    assignValue(attrName, expression, 'properties');
-                }
+                throw attrPath.buildCodeFrameError(`Attribute value of type ${expression.type || 'unknown'} is unsupported.`);
             }
         }
 
@@ -134,10 +172,10 @@ const traverseJSXElementTree = (element: NodePath<types.JSXElement>, block: Bloc
     // Remove all attributes that were processed.
     // The reason for not removing it directly in the loop
     // is that it messes up the indexes of the attributes, leading to skipped elements.
-    // const attributePaths = element.get('openingElement.attributes') as NodePath<JSXAttribute>[];
+    // const attrPaths = element.get('openingElement.attributes') as NodePath<JSXAttribute>[];
     // if ((bemProps.block && hasFoundBlock) || bemProps.elem || bemProps.mods) {
     //     attributeIndexesToRemove.forEach(attributeIndex => {
-    //         attributePaths[attributeIndex].remove();
+    //         attrPaths[attributeIndex].remove();
     //     });
     // }
 
@@ -170,7 +208,7 @@ const traverseJSXElementTree = (element: NodePath<types.JSXElement>, block: Bloc
     // }
 
     // @ts-ignore
-    attributePaths.push(BEM_PROPS);
+    attrPaths.push(BEM_PROPS);
     console.log(BEM_PROPS);
 
     element.get('children').forEach(childElement => { // Here happens the recursive traversal
@@ -211,3 +249,10 @@ const traverseJSXElementTree = (element: NodePath<types.JSXElement>, block: Bloc
 
 //     throw Error(message);
 // };
+
+/**
+ * A wrapper around the 'throw' keyword to allow use in logical expressions.
+ */
+const throwError = (error: Error) => {
+    throw error;
+};

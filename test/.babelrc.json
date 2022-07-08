@@ -4,7 +4,12 @@
     ],
     "plugins": [
         "@babel/plugin-syntax-jsx",
-        "../lib/index"
+        [
+            "../lib/index",
+            {
+                // "allowStringLiteral": false
+            }
+        ]
     ],
     "retainLines": true
 }

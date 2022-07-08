@@ -9,7 +9,7 @@ import {
     CallExpression
 } from '@babel/types';
 
-export type BEMBaseAttribute = null | string | StringLiteral[] | TemplateLiteral | CallExpression;
+export type BEMBaseAttribute = null | StringLiteral | StringLiteral[] | TemplateLiteral | CallExpression;
 export type Block = BEMBaseAttribute;
 export type Elem = BEMBaseAttribute;
 export type Mods = BEMBaseAttribute | (ObjectProperty | ObjectMethod)[];
