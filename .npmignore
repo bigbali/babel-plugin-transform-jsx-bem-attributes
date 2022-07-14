@@ -1,7 +1,7 @@
 src/
 test/
 .vscode
-.eslintrc
+.eslintrc.json
 .gitignore
 tsconfig.json
 yarn.lock

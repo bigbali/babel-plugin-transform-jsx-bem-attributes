@@ -29,13 +29,13 @@ const BlockClassName = () => {
             <div className="Block0 Block1 Block2" />
             <div className="Block0 Block1 Block2" />
 
-            <div className="ClassName" />
-            <div className="ClassName" />
-            <div className="ClassName0 ClassName1 ClassName2" />
+            <div block="" className="ClassName" className="ClassName" />
+            <div block="" className={"ClassName"} className="ClassName" />
+            <div block="" className={["ClassName0", "ClassName1", "ClassName2"]} className="ClassName0 ClassName1 ClassName2" />
 
-            <div className="ClassName" />
-            <div className="ClassName" />
-            <div className="ClassName0 ClassName1 ClassName2" />
+            <div block={""} className="ClassName" className="ClassName" />
+            <div block={""} className={"ClassName"} className="ClassName" />
+            <div block={""} className={["ClassName0", "ClassName1", "ClassName2"]} className="ClassName0 ClassName1 ClassName2" />
 
             <div className="ClassName" />
             <div className="ClassName" />

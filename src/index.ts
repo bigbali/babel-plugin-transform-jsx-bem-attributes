@@ -66,7 +66,7 @@ const traverseJSXElementTree = (element: NodePath<babel.types.JSXElement>, block
         className: EMPTY
     };
 
-    let hasFoundBlock = false;
+    let hasFoundValidBlock = false;
 
     attributes.forEach((attribute, index) => {
         const {
@@ -86,8 +86,8 @@ const traverseJSXElementTree = (element: NodePath<babel.types.JSXElement>, block
             if (value) {
                 bemProps[name] = value;
 
-                if (name === BEMPropTypes.BLOCK) {
-                    hasFoundBlock = true;
+                if (name === BEMPropTypes.BLOCK && value) {
+                    hasFoundValidBlock = true;
                 }
             }
         }
@@ -102,8 +102,8 @@ const traverseJSXElementTree = (element: NodePath<babel.types.JSXElement>, block
                 if (value) {
                     bemProps[name] = value;
 
-                    if (name === BEMPropTypes.BLOCK) {
-                        hasFoundBlock = true;
+                    if (name === BEMPropTypes.BLOCK && value) {
+                        hasFoundValidBlock = true;
                     }
                 }
             }
@@ -114,8 +114,8 @@ const traverseJSXElementTree = (element: NodePath<babel.types.JSXElement>, block
                 if (elements.length) {
                     bemProps[name] = elements;
 
-                    if (name === BEMPropTypes.BLOCK) {
-                        hasFoundBlock = true;
+                    if (name === BEMPropTypes.BLOCK && elements.length) {
+                        hasFoundValidBlock = true;
                     }
                 }
             }
@@ -125,21 +125,13 @@ const traverseJSXElementTree = (element: NodePath<babel.types.JSXElement>, block
 
                 bemProps.mods = properties as (ObjectProperty | ObjectMethod)[];
             }
-
-            // if (types.isCallExpression(expression)) {
-            //     const { properties } = expression;
-            //     if (isObjectPropertyArray(properties)) {
-            //         bemProps.mods = properties;
-            //     }
-
-            // }
         }
 
         attributeIndexesToRemove.push(index);
     });
 
     // If there was no new 'block' defined on the element, but 'elem' or 'mods' were
-    if (!hasFoundBlock && (bemProps.elem || bemProps.mods)
+    if (!hasFoundValidBlock && (bemProps.elem || bemProps.mods)
         && DISABLE_BLOCK_INHERITANCE()) {
         handleUndefinedBlock(
             bemProps.block,
@@ -152,29 +144,29 @@ const traverseJSXElementTree = (element: NodePath<babel.types.JSXElement>, block
     // The reason for not removing it directly in the loop
     // is that it messes up the indexes of the attributes, leading to skipped elements.
     const attributePaths = element.get('openingElement.attributes') as NodePath<JSXAttribute>[];
-    if ((bemProps.block && hasFoundBlock) || bemProps.elem || bemProps.mods) {
+    if ((bemProps.block && hasFoundValidBlock) || bemProps.elem || bemProps.mods) {
         attributeIndexesToRemove.forEach(attributeIndex => {
             attributePaths[attributeIndex].remove();
         });
     }
 
     // When block inheritance is disabled, we will need to have defined on every line a new block,
-    // therefore hasFoundBlock would be always true. So, to correctly check if block is top level,
+    // therefore hasFoundValidBlock would be always true. So, to correctly check if block is top level,
     // compare the newly assigned block to the one from the previous iteration.
     // (if they match => they are the same, which means we have in fact *not* found a new block)
     // If you are trying to understand what is happening below, please forgive me :|
     const isBlockTopLevelEvaluation = typeof bemProps.block === 'string'
-        ? (hasFoundBlock && bemProps.block !== block)
+        ? (hasFoundValidBlock && bemProps.block !== block)
         : isArray(bemProps.block) && isArray(block) // When both are arrays, compare them
-            ? hasFoundBlock && JSON.stringify(bemProps.block) === JSON.stringify(block)
+            ? hasFoundValidBlock && JSON.stringify(bemProps.block) === JSON.stringify(block)
             : ( // When they have differing types, we know block is top level
                 isArray(bemProps.block) && typeof block === 'string'
                 || isArray(block) && typeof bemProps.block === 'string'
             );
 
     const isBlockTopLevel = DISABLE_BLOCK_INHERITANCE()
-        ? isBlockTopLevelEvaluation || (!block && hasFoundBlock)
-        : hasFoundBlock;
+        ? isBlockTopLevelEvaluation || (!block && hasFoundValidBlock)
+        : hasFoundValidBlock;
     const classNameAttribute = construct(bemProps, isBlockTopLevel) as babel.types.JSXAttribute;
 
     if (classNameAttribute) {
