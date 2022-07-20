@@ -12,3 +12,17 @@ export const App = () => {
         </div >
     );
 }
+
+export const className = () => {
+    return (
+        <div className="0ClassName">
+            <div className="1ClassName" />
+            <div className={['2ClassName0', '2ClassName1']} />
+            <div className={['3ClassName0', '']} />
+            <div className={['4ClassName0', null]} />
+            <div className={['', '']} />
+            <div className={['', '6ClassName1']} />
+            <div className={[]} />
+        </div>
+    );
+}

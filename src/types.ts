@@ -1,18 +1,14 @@
-import {
-    ObjectProperty,
-    ObjectMethod,
-    StringLiteral,
-    JSXExpressionContainer,
-    SpreadElement,
-    isObjectProperty,
-    TemplateLiteral,
-    CallExpression
-} from '@babel/types';
+import { types } from '@babel/core';
 
-export type BEMBaseAttribute = null | StringLiteral | StringLiteral[] | TemplateLiteral | CallExpression;
+export type BEMBaseAttribute = null
+    | types.ArrayExpression
+    | types.CallExpression
+    | types.StringLiteral
+    | types.TemplateLiteral;
+
 export type Block = BEMBaseAttribute;
 export type Elem = BEMBaseAttribute;
-export type Mods = BEMBaseAttribute | (ObjectProperty | ObjectMethod)[];
+export type Mods = BEMBaseAttribute | types.ObjectExpression;
 export type ClassName = BEMBaseAttribute;
 
 export interface BEMProps {
@@ -22,7 +18,7 @@ export interface BEMProps {
     className: ClassName;
 };
 export interface Attribute {
-    value: StringLiteral | JSXExpressionContainer,
+    value: types.StringLiteral | types.JSXExpressionContainer,
     name: {
         name: `${BEMPropTypes}` & keyof BEMProps
     };
@@ -35,11 +31,11 @@ export enum BEMPropTypes {
     CLASSNAME = 'className'
 };
 
-export const isObjectPropertyArray = (
-    properties: (ObjectMethod | ObjectProperty | SpreadElement)[]
-): properties is ObjectProperty[] => {
-    return properties.every(property => isObjectProperty(property));
-};
+// export const isObjectPropertyArray = (
+//     properties: (ObjectMethod | ObjectProperty | SpreadElement)[]
+// ): properties is ObjectProperty[] => {
+//     return properties.every(property => isObjectProperty(property));
+// };
 
 export const isArray = Array.isArray;
 

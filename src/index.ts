@@ -14,6 +14,7 @@ import {
     BEM_PROP_TYPES
 } from './constants';
 import removeAttrPaths from './removeAttrPaths';
+import constructClassNameAttribute from './construct';
 
 export type NPJSXAttribute = NodePath<types.JSXAttribute>;
 
@@ -82,26 +83,30 @@ const traverseJSXElementTree = (element: NodePath<types.JSXElement>, block: Bloc
         className: null
     };
 
-    // let hasFoundBlock = false;
+    const assignValue = <T>(
+        attrName: keyof BEMProps,
+        attrValue: T,
+        attrKey?: keyof T,
+        attrPath?: NPJSXAttribute
+    ) => {
+        const value = (attrKey ? attrValue[attrKey] : attrValue);
 
-    const assignValue = <T>(attrName: keyof BEMProps, attrValue: T, attrKey?: keyof T, attrPath?: NPJSXAttribute) => {
-        const value = attrKey ? attrValue[attrKey] : attrValue;
-
-        if ((isArray(value) && value.length) || value) { // @ts-ignore
-            BEM_PROPS[attrName] = value;
-
-            if (attrName === BEMPropTypes.BLOCK) {
-                isBlockInherited = false;
+        // @ts-ignore
+        if (!value || types.isArrayExpression(value) && value.elements.length === 0) {
+            if (OPTIONS.allowFalsyValue) {
+                console.warn('An empty array or falsy value was passed in. Disable allowFalsyValue to see where.');
+            } else {
+                attrPath && throwError(attrPath.buildCodeFrameError('Empty array or falsy value was passed in.'));
             }
-
-            return true;
         }
 
-        if (OPTIONS.allowFalsyValue) {
-            console.warn('An empty array or falsy value was passed in. Disable allowFalsyValue to see where.');
-        } else {
-            attrPath && throwError(attrPath.buildCodeFrameError('Empty array or falsy value was passed in.'));
+        BEM_PROPS[attrName] = value as SupportedTypes & null;
+
+        if (attrName === BEMPropTypes.BLOCK) {
+            isBlockInherited = false;
         }
+
+        return true;
     };
 
     const assignOrThrow = (
@@ -111,7 +116,7 @@ const traverseJSXElementTree = (element: NodePath<types.JSXElement>, block: Bloc
         key: keyof Options
     ) => {
         OPTIONS[key] && assignValue(attrName, value) || throwError(attrPath.buildCodeFrameError(
-            `You tried to use a string literal as a value, but '${key}' is explicitly set to false.`
+            `You tried to use a value with type '${value.type}', but '${key}' is explicitly set to false.`
         ));
     };
 
@@ -169,10 +174,9 @@ const traverseJSXElementTree = (element: NodePath<types.JSXElement>, block: Bloc
         }
 
         attrPathsToRemove.push(attrPath as NPJSXAttribute);
-        // attributeIndexesToRemove.push(index);
     });
 
-    if (!isClassNameOnly) {
+    if (!isClassNameOnly) { // We cannot remove attributes directly in the main loop, as it would mess with the indexes
         removeAttrPaths(attrPathsToRemove);
     }
 
@@ -186,15 +190,6 @@ const traverseJSXElementTree = (element: NodePath<types.JSXElement>, block: Bloc
     //     );
     // }
 
-    // Remove all attributes that were processed.
-    // The reason for not removing it directly in the loop
-    // is that it messes up the indexes of the attributes, leading to skipped elements.
-    // const attrPaths = element.get('openingElement.attributes') as NodePath<JSXAttribute>[];
-    // if ((bemProps.block && hasFoundBlock) || bemProps.elem || bemProps.mods) {
-    //     attributeIndexesToRemove.forEach(attributeIndex => {
-    //         attrPaths[attributeIndex].remove();
-    //     });
-    // }
 
     // When block inheritance is disabled, we will need to have defined on every line a new block,
     // therefore hasFoundBlock would be always true. So, to correctly check if block is top level,
@@ -213,7 +208,8 @@ const traverseJSXElementTree = (element: NodePath<types.JSXElement>, block: Bloc
     // const isBlockTopLevel = DISABLE_BLOCK_INHERITANCE()
     //     ? isBlockTopLevelEvaluation || (!block && hasFoundBlock)
     //     : hasFoundBlock;
-    // const classNameAttribute = construct(bemProps, isBlockTopLevel) as babel.types.JSXAttribute;
+
+    const classNameAttribute = constructClassNameAttribute(BEM_PROPS, isBlockInherited, element);
 
     // if (classNameAttribute) {
     //     const { value } = classNameAttribute;
