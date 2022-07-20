@@ -3,28 +3,26 @@ import {
     PluginObj as Plugin,
     types
 } from '@babel/core';
-// import type {
-//     JSXAttribute,
-//     JSXIdentifier,
-//     StringLiteral,
-//     SourceLocation,
-//     ObjectProperty,
-//     ObjectMethod,
-//     JSXElement
-// } from '@babel/types';
-// import * as types from '@babel/types';
 import {
     Attribute,
     BEMProps,
     BEMPropTypes,
     Block,
-    isArray,
-    // isObjectPropertyArray
+    isArray
 } from './types';
 import {
-    BEM_PROP_TYPES,
-    // EMPTY
+    BEM_PROP_TYPES
 } from './constants';
+import removeAttrPaths from './removeAttrPaths';
+
+export type NPJSXAttribute = NodePath<types.JSXAttribute>;
+
+type SupportedTypes = types.ArrayExpression
+    | types.CallExpression
+    | types.ObjectExpression
+    | types.StringLiteral
+    | types.TemplateLiteral
+    | types.Identifier;
 
 type Options = {
     allowStringLiteral: boolean,
@@ -32,7 +30,8 @@ type Options = {
     allowArrayExpression: boolean,
     allowCallExpression: boolean,
     allowObjectExpression: boolean,
-    allowIdentifier: boolean
+    allowIdentifier: boolean,
+    allowFalsyValue: boolean
 };
 
 const DEFAULT_OPTIONS: Options = {
@@ -41,7 +40,8 @@ const DEFAULT_OPTIONS: Options = {
     allowArrayExpression: true,
     allowCallExpression: true,
     allowObjectExpression: true,
-    allowIdentifier: false
+    allowIdentifier: false,
+    allowFalsyValue: false
 };
 
 let OPTIONS = DEFAULT_OPTIONS;
@@ -72,6 +72,8 @@ export default function transformJSXBEMAttributes(): Plugin {
 const traverseJSXElementTree = (element: NodePath<types.JSXElement>, block: Block) => {
     const openingElement = element.get('openingElement');
     const attrPaths = openingElement.get('attributes');
+    let isClassNameOnly = true;
+    let isBlockInherited = true;
 
     const BEM_PROPS: BEMProps = {
         block,
@@ -82,27 +84,43 @@ const traverseJSXElementTree = (element: NodePath<types.JSXElement>, block: Bloc
 
     // let hasFoundBlock = false;
 
-    const assignValue = <T>(attrName: keyof BEMProps, attrValue: T, attrKey?: keyof T, attrPath?: NodePath<types.JSXElement>) => {
+    const assignValue = <T>(attrName: keyof BEMProps, attrValue: T, attrKey?: keyof T, attrPath?: NPJSXAttribute) => {
         const value = attrKey ? attrValue[attrKey] : attrValue;
 
         if ((isArray(value) && value.length) || value) { // @ts-ignore
             BEM_PROPS[attrName] = value;
 
             if (attrName === BEMPropTypes.BLOCK) {
-                // hasFoundBlock = true;
+                isBlockInherited = false;
             }
 
             return true;
         }
 
-        attrPath && throwError(attrPath.buildCodeFrameError('Empty array or falsy value was passed in.'));
+        if (OPTIONS.allowFalsyValue) {
+            console.warn('An empty array or falsy value was passed in. Disable allowFalsyValue to see where.');
+        } else {
+            attrPath && throwError(attrPath.buildCodeFrameError('Empty array or falsy value was passed in.'));
+        }
     };
 
+    const assignOrThrow = (
+        attrName: keyof BEMProps,
+        attrPath: NPJSXAttribute,
+        value: SupportedTypes,
+        key: keyof Options
+    ) => {
+        OPTIONS[key] && assignValue(attrName, value) || throwError(attrPath.buildCodeFrameError(
+            `You tried to use a string literal as a value, but '${key}' is explicitly set to false.`
+        ));
+    };
+
+    const attrPathsToRemove: NPJSXAttribute[] = [];
     attrPaths.forEach(attrPath => {
         const { node } = attrPath;
 
         if (types.isJSXSpreadAttribute(node)) {
-            throwError(attrPath.buildCodeFrameError('Spread attributes are not supported.'));
+            return; // There's not much we can do with spread attributes, so let's skip them
         }
 
         const {
@@ -116,31 +134,25 @@ const traverseJSXElementTree = (element: NodePath<types.JSXElement>, block: Bloc
             return;
         }
 
+        if (attrName !== BEMPropTypes.CLASSNAME) {
+            isClassNameOnly = false;
+        }
+
         if (types.isStringLiteral(attrValue)) {
-            OPTIONS.allowStringLiteral && assignValue(attrName, attrValue) || throwError(attrPath.buildCodeFrameError(
-                'You tried to use a string literal as a value, but \'allowStringLiteral\' is explicitly set to false.'
-            ));
+            assignOrThrow(attrName, attrPath as NPJSXAttribute, attrValue, 'allowStringLiteral');
         }
 
         if (types.isJSXExpressionContainer(attrValue)) {
             const { expression } = attrValue;
 
             if (types.isStringLiteral(expression)) {
-                OPTIONS.allowStringLiteral && assignValue(attrName, expression) || throwError(attrPath.buildCodeFrameError(
-                    'You tried to use a string literal as a value, but \'allowStringLiteral\' is explicitly set to false.'
-                ));
+                assignOrThrow(attrName, attrPath as NPJSXAttribute, expression, 'allowStringLiteral');
             } else if (types.isCallExpression(expression)) {
-                OPTIONS.allowCallExpression && assignValue(attrName, expression) || throwError(attrPath.buildCodeFrameError(
-                    'You tried to use a function call expression as a value, but \'allowCallExpression\' is explicitly set to false.'
-                ));
+                assignOrThrow(attrName, attrPath as NPJSXAttribute, expression, 'allowCallExpression');
             } else if (types.isTemplateLiteral(expression)) {
-                OPTIONS.allowTemplateLiteral && assignValue(attrName, expression) || throwError(attrPath.buildCodeFrameError(
-                    'You tried to use a template literal as a value, but \'allowTemplateLiteral\' is explicitly set to false.'
-                ));
+                assignOrThrow(attrName, attrPath as NPJSXAttribute, expression, 'allowTemplateLiteral');
             } else if (types.isArrayExpression(expression)) {
-                OPTIONS.allowArrayExpression && assignValue(attrName, expression) || throwError(attrPath.buildCodeFrameError(
-                    'You tried to use an array expression as a value, but \'allowArrayExpression\' is explicitly set to false.'
-                ));
+                assignOrThrow(attrName, attrPath as NPJSXAttribute, expression, 'allowArrayExpression');
             } else if (types.isIdentifier(expression)) {
                 OPTIONS.allowIdentifier && assignValue(attrName, expression) || throwError(attrPath.buildCodeFrameError(
                     `You tried to use an identifier as a value, but 'allowIdentifier' is set to false.
@@ -156,8 +168,13 @@ const traverseJSXElementTree = (element: NodePath<types.JSXElement>, block: Bloc
             }
         }
 
+        attrPathsToRemove.push(attrPath as NPJSXAttribute);
         // attributeIndexesToRemove.push(index);
     });
+
+    if (!isClassNameOnly) {
+        removeAttrPaths(attrPathsToRemove);
+    }
 
     // If there was no new 'block' defined on the element, but 'elem' or 'mods' were
     // if (!hasFoundBlock && (bemProps.elem || bemProps.mods)
@@ -208,8 +225,8 @@ const traverseJSXElementTree = (element: NodePath<types.JSXElement>, block: Bloc
     // }
 
     // @ts-ignore
-    attrPaths.push(BEM_PROPS);
-    console.log(BEM_PROPS);
+    // attrPaths.push(BEM_PROPS);
+    // console.log(attrPaths);
 
     element.get('children').forEach(childElement => { // Here happens the recursive traversal
         if (types.isJSXElement(childElement.node)) {

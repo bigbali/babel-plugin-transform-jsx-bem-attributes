@@ -153,7 +153,7 @@ describe('Reworked plugin doesn\'t throw', () => {
     // const input = readFileSync(path.resolve(__dirname, 'testfile.jsx'));
     it('does something', () => {
         const output = transformFileSync(path.resolve(__dirname, 'testfile.jsx'));
-        writeFileSync(path.resolve(__dirname, 'testfile_out.jsx'), JSON.stringify(output.ast), CONFIG);
+        writeFileSync(path.resolve(__dirname, 'testfile_out.jsx'), output.code, CONFIG);
 
     })
 });

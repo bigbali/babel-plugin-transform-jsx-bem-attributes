@@ -3,7 +3,7 @@ export const App = () => {
     const obj = { a: 0, b: 1 };
 
     return (
-        <div block="Block">
+        <div block="Block" x={'no'}>
             <span elem="Elem" />
             <span elem={"Elem"} mods="Mods" />
             <span elem="Elem" mods={{ m1: true }} />
