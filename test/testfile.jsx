@@ -23,6 +23,11 @@ export const className = () => {
             <div className={['', '']} />
             <div className={['', '6ClassName1']} />
             <div className={[]} />
+            <div className={func()} />
+            <div className={`${func()}`} />
+            <div className={`PRE ${func()} POST`} />
+            <div className={[func(), obj]} />
+            <div className={`PRE ${func()}${obj} POST`} />
         </div>
     );
 }

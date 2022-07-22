@@ -176,10 +176,10 @@ const traverseJSXElementTree = (element: NodePath<types.JSXElement>, block: Bloc
         attrPathsToRemove.push(attrPath as NPJSXAttribute);
     });
 
-    if (!isClassNameOnly) { // We cannot remove attributes directly in the main loop, as it would mess with the indexes
-        removeAttrPaths(attrPathsToRemove);
-    }
+    // if (!isClassNameOnly) { // We cannot remove attributes directly in the main loop, as it would mess with the indexes
+    // }
 
+    removeAttrPaths(attrPathsToRemove);
     // If there was no new 'block' defined on the element, but 'elem' or 'mods' were
     // if (!hasFoundBlock && (bemProps.elem || bemProps.mods)
     //     && DISABLE_BLOCK_INHERITANCE()) {
@@ -210,7 +210,12 @@ const traverseJSXElementTree = (element: NodePath<types.JSXElement>, block: Bloc
     //     : hasFoundBlock;
 
     const classNameAttribute = constructClassNameAttribute(BEM_PROPS, isBlockInherited, element);
+    console.log(classNameAttribute);
 
+    element.node.openingElement.attributes.push(types.jsxAttribute(
+        types.jsxIdentifier('className'), // @ts-ignore
+        types.jsxExpressionContainer(classNameAttribute)
+    ));
     // if (classNameAttribute) {
     //     const { value } = classNameAttribute;
 

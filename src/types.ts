@@ -6,10 +6,14 @@ export type BEMBaseAttribute = null
     | types.StringLiteral
     | types.TemplateLiteral;
 
-export type Block = BEMBaseAttribute;
-export type Elem = BEMBaseAttribute;
-export type Mods = BEMBaseAttribute | types.ObjectExpression;
-export type ClassName = BEMBaseAttribute;
+// export type Block = BEMBaseAttribute;
+// export type Elem = BEMBaseAttribute;
+// export type Mods = BEMBaseAttribute | types.ObjectExpression;
+// export type ClassName = BEMBaseAttribute;
+export type Block = types.Expression | null;
+export type Elem = types.Expression | null;
+export type Mods = types.Expression | null;
+export type ClassName = types.Expression | null;
 
 export interface BEMProps {
     block: Block;

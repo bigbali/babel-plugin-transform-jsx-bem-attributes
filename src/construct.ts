@@ -1,313 +1,169 @@
 import { NodePath, types } from '@babel/core';
-// import * as types from '@babel/types';
-// import {
-//     ConditionalExpression,
-//     Identifier,
-//     ObjectProperty,
-//     Expression
-// } from '@babel/types';
-// import {
-//     WHITESPACE,
-//     EMPTY,
-//     ELEM_CONNECTOR,
-//     MODS_CONNECTOR
-// } from './constants';
+import { getHeapSpaceStatistics } from 'v8';
 import {
     BEMProps,
     BEMPropTypes,
+    Block,
     isArray
 } from './types';
 
 const EMPTY_STRING = '';
 const SPACE = ' ';
 
-// export function* constructBlock({ block }: BEMProps, shouldSkip?: boolean) {
-//     if (shouldSkip) {
-//         return;
-//     }
-
-//     if (!block.length || shouldSkip) {
-//         yield EMPTY;
-//     }
-
-//     if (isArray(block)) {
-//         for (const { value } of block) {
-//             if (!value || typeof value !== 'string') {
-//                 continue;
-//             }
-
-//             yield value;
-//         }
-//     }
-
-//     if (typeof block === 'string') {
-//         yield block;
-//     }
-// };
-
-// export function* constructElem(bemProps: BEMProps) {
-//     const { block, elem } = bemProps;
-
-//     if (block.length === 0 || !elem || elem.length === 0) {
-//         return EMPTY;
-//     }
-
-//     for (const _block of constructBlock(bemProps)) {
-//         if (!_block) {
-//             continue;
-//         }
-
-//         if (isArray(elem)) {
-//             for (const { value: _elem } of elem) {
-//                 if (!_elem) {
-//                     continue;
-//                 }
-
-//                 yield `${_block}${ELEM_CONNECTOR()}${_elem}`;
-//             }
-//         }
-
-//         if (typeof elem === 'string' && elem) {
-//             yield `${_block}${ELEM_CONNECTOR()}${elem}`;
-//         }
-//     }
-// };
-
-// export function* constructMods(bemProps: BEMProps, isBlockTopLevel: boolean) {
-//     const { elem, mods } = bemProps;
-
-//     if (!isBlockTopLevel && !elem?.length) {
-//         return EMPTY;
-//     }
-
-//     // If mods is empty string or
-//     if (!mods || (!elem?.length && !(mods?.length || Object.keys(mods).length))) {
-//         return EMPTY;
-//     }
-
-//     // If we have 'elem', use that, otherwise use 'block'
-//     const modsPrefixIterator = elem?.length
-//         ? constructElem(bemProps)
-//         : constructBlock(bemProps);
-
-//     const prefixes: string[] = [];
-
-//     for (const prefix of modsPrefixIterator) {
-//         prefixes.push(prefix);
-//     }
-
-//     if (isArray(mods)) {
-//         for (const mod of mods) {
-//             if (types.isStringLiteral(mod) && mod.value) {
-//                 yield prefixes.reduce((acc, prefix) => {
-//                     const SPACE_AFTER_ACC = acc && prefix
-//                         ? WHITESPACE
-//                         : EMPTY;
-
-//                     return prefix
-//                         ? `${acc}${SPACE_AFTER_ACC}${prefix}${MODS_CONNECTOR()}${mod.value}`
-//                         : EMPTY;
-//                 }, EMPTY);
-//             }
-
-//             if (types.isObjectProperty(mod)) {
-//                 const { key, value } = mod;
-//                 const modName = types.isIdentifier(key)
-//                     ? key.name
-//                     : types.isStringLiteral(key)
-//                         ? key.value
-//                         : EMPTY;
-
-//                 // When the right hand side of the object property is a boolean and is false,
-//                 // omit it altogether
-//                 if (types.isBooleanLiteral(value) && !value.value) {
-//                     continue;
-//                 }
-
-//                 yield prefixes.reduce((acc, prefix) => {
-//                     const SPACE_AFTER_ACC: string = acc && prefix
-//                         ? WHITESPACE
-//                         : EMPTY;
-
-//                     return prefix
-//                         ? `${acc}${SPACE_AFTER_ACC}${prefix}${MODS_CONNECTOR()}${modName}`
-//                         : EMPTY;
-//                 }, EMPTY);
-//             }
-//         }
-//     }
-
-//     if (prefixes.length && typeof mods === 'string') {
-//         yield prefixes.reduce((acc, prefix) => {
-//             const SPACE_AFTER_ACC = acc && prefix
-//                 ? WHITESPACE
-//                 : EMPTY;
-
-//             return prefix
-//                 ? `${acc}${SPACE_AFTER_ACC}${prefix}${MODS_CONNECTOR()}${mods}`
-//                 : EMPTY;
-
-//         }, EMPTY);
-//     }
-
-//     return EMPTY;
-// }
-
-export const constructClassName = (BEM_PROPS: BEMProps): string | null => {
-    const { className } = BEM_PROPS;
-
-    if (types.isStringLiteral(className)) {
-        return className.value;
+const getArray = (value: types.Expression | null) => {
+    if (types.isStringLiteral(value) || types.isTemplateLiteral(value)) {
+        return [value];
     }
 
-    if (types.isArrayExpression(className)) {
-        return (
-            className.elements.reduce((previous, current) => {
-                if (types.isStringLiteral(current)) {
-                    const SPACE_AFTER_CLASSNAME = previous && current ? SPACE : EMPTY_STRING;
-
-                    if (!current?.value) {
-                        return previous;
+    if (types.isArrayExpression(value)) {
+        return value.elements.map(element => {
+            if (types.isExpression(value)) {
+                if (element) {
+                    if (types.isStringLiteral(element) && element.value) {
+                        return element;
                     }
 
-                    return `${previous}${SPACE_AFTER_CLASSNAME}${current.value}`;
+                    if (!types.isSpreadElement(element)) {
+                        return types.templateLiteral(
+                            [
+                                types.templateElement({ raw: '' }, false),
+                                types.templateElement({ raw: '' }, true)
+                            ],
+                            [
+                                element
+                            ]
+                        );
+                    }
                 }
 
-                return previous;
-            }, EMPTY_STRING)
-        );
+                return null;
+            }
+
+            return null;
+        });
     }
 
-    return null;
+    if (types.isExpression(value)) {
+        return [
+            types.templateLiteral(
+                [
+                    types.templateElement({ raw: '' }, false),
+                    types.templateElement({ raw: '' }, true)
+                ],
+                [
+                    value
+                ]
+            )
+        ];
+    }
 
-    // if (isArray(className)) {
-    //     return className.reduce((constructedClassName, currentClassName) => {
-    //         const SPACE_AFTER_CLASSNAME = constructedClassName
-    //             ? WHITESPACE
-    //             : EMPTY;
-
-    //         return `${constructedClassName}${SPACE_AFTER_CLASSNAME}${currentClassName.value}`;
-    //     }, EMPTY);
-    // }
-
-    // if (typeof className === 'object') {
-    //     return EMPTY;
-    // }
-
-    // return className;
+    return [null];
 };
+
+export function* getBlockArray({ block }: BEMProps) {
+    yield* getArray(block);
+};
+
+export function* getElemArray({ elem }: BEMProps) {
+    yield* getArray(elem);
+};
+
+export function* getModsArray({ mods }: BEMProps) {
+    yield* getArray(mods);
+};
+
+export function* getClassNameArray({ className }: BEMProps) {
+    yield* getArray(className);
+};
+
+export const reduceBlock = (blocks: Block[], isInherited: boolean) => {
+    if (isInherited) {
+        return EMPTY_STRING;
+    }
+
+    blocks.reduce((previous, current) => {
+        // if (types.isStringLiteral(current)) {
+        //     const SPACE_AFTER_BLOCK = previous && current
+        //         ? SPACE
+        //         : EMPTY_STRING;
+
+        //     return `${previous}${SPACE_AFTER_BLOCK}${current.value}`;
+        // }
+
+        if (current === null) {
+            return previous;
+        }
+
+        return types.templateLiteral(
+            [
+                types.templateElement({ raw: '' }, false),
+                types.templateElement({ raw: '' }, true)
+            ],
+            [
+                current
+            ]);
+
+        return previous;
+    }, null);
+
+    // return types.templateLiteral(
+    //     [
+    //         types.templateElement({ raw: '' }, false),
+    //         types.templateElement({ raw: '' }, true)
+    //     ],
+    //     [
+    //         block
+    //     ]);
+};
+
 
 export default function constructClassNameAttribute(
     BEM_PROPS: BEMProps,
     isBlockInherited: boolean,
     element: NodePath<types.JSXElement>
 ) {
-    const CLASS_NAME = constructClassName(BEM_PROPS);
-    console.log(`[${CLASS_NAME || ''}]`);
-    // const _conditionalExpressions: ConditionalExpression[] = [];
-    // let _block = EMPTY;
-    // let _elem = EMPTY;
-    // let _mods = EMPTY;
+    const ARRAY_CLASS_NAME = [...getClassNameArray(BEM_PROPS)];
+    const ARRAY_BLOCK = [...getBlockArray(BEM_PROPS)];
 
-    // if (isBlockTopLevel) { // If block is inherited, we don't want it in the className by itself
-    //     for (const block of constructBlock(bemProps, !isBlockTopLevel)) {
-    //         const SPACE = _block ? WHITESPACE : EMPTY;
-    //         _block = `${_block}${SPACE}${block}`;
+    // const BLOCK = reduceBlock(ARRAY_BLOCK, isBlockInherited);
+
+    const x = [...ARRAY_BLOCK, ...ARRAY_CLASS_NAME];
+
+    // return ARRAY_BLOCK;
+    return types.templateLiteral(
+        [
+            // types.templateElement({ raw: '' }),
+            ...x.map(() => types.templateElement({ raw: '' }))
+        ],
+        // [
+        //     types.templateElement({ raw: '' }, false),
+        //     types.templateElement({ raw: '' }, true)
+        // ],
+        // @ts-ignore
+        [
+            ...ARRAY_BLOCK.filter(block => { if (block) { return true; } }),
+            ...ARRAY_CLASS_NAME.filter(block => { if (block) { return true; } })
+        ]
+    );
+
+    // const BLOCK = ARRAY_BLOCK.reduce((previous, current) => {
+    //     if (types.isStringLiteral(current)) {
+    //         const SPACE_AFTER_BLOCK = previous && current
+    //         ? SPACE
+    //         : EMPTY_STRING;
+
+    //         return `${previous}${SPACE_AFTER_BLOCK}${current}`;
     //     }
-    // }
+    //     if (types.isTemplateLiteral(element)) {
 
-    // for (const elem of constructElem(bemProps)) {
-    //     const SPACE = _elem ? WHITESPACE : EMPTY;
-    //     _elem = `${_elem}${SPACE}${elem}`;
-    // }
-
-    // for (const mod of constructMods(bemProps, isBlockTopLevel)) {
-    //     const SPACE = _mods ? WHITESPACE : EMPTY;
-    //     _mods = `${_mods}${SPACE}${mod}`;
-    // }
-
-    // if (isArray(bemProps.mods)) {
-    //     const modsIterator = constructMods(bemProps, isBlockTopLevel);
-
-    //     for (const mod of bemProps.mods) {
-    //         if (types.isObjectProperty(mod)) {
-    //             const { value } = mod;
-
-    //             // When the right hand side of the object property is a boolean, it can only be always true or always false
-    //             // so there is no point in constructing a conditional expression
-    //             if (types.isBooleanLiteral(value)) {
-    //                 continue;
-    //             }
-
-    //             const conditionalExpression = getConditionalExpression(mod, modsIterator);
-
-    //             if (!conditionalExpression) {
-    //                 continue;
-    //             }
-
-    //             _conditionalExpressions.push(conditionalExpression);
-    //         }
     //     }
-    // }
 
-    // const SPACE_AFTER_BLOCK = _block && (_elem || _mods || _className)
-    //     ? WHITESPACE
-    //     : EMPTY;
-    // const SPACE_AFTER_ELEM = _elem && (_mods || _conditionalExpressions.length)
-    //     ? WHITESPACE
-    //     : EMPTY;
-    // const SPACE_AFTER_MODS = _mods && _className
-    //     ? WHITESPACE
-    //     : EMPTY;
-    // const SPACE_AFTER_CLASSNAME = _className
-    //     ? WHITESPACE
-    //     : EMPTY;
 
-    // const CLASS_NAME = _conditionalExpressions.length
-    //     ? `${_block}${SPACE_AFTER_BLOCK}${_elem}${SPACE_AFTER_ELEM}${_className}${SPACE_AFTER_CLASSNAME}`
-    //     : `${_block}${SPACE_AFTER_BLOCK}${_elem}${SPACE_AFTER_ELEM}${_mods}${SPACE_AFTER_MODS}${_className}`;
+    //     return previous;
+    // }, EMPTY_STRING);
 
-    // // If we have conditional expresssions, construct template literals using them
-    // if (_conditionalExpressions.length) {
-    //     return (
-    //         types.jsxAttribute(
-    //             types.jsxIdentifier(BEMPropTypes.CLASSNAME),
-    //             types.jsxExpressionContainer(
-    //                 types.templateLiteral(
-    //                     [
-    //                         types.templateElement({ raw: CLASS_NAME }, false),
-    //                         ..._conditionalExpressions.map(() => types.templateElement({ raw: '' }, false))
-    //                     ],
-    //                     _conditionalExpressions
-    //                 )
-    //             )
-    //         )
-    //     );
-    // }
+    // return [...CLASS_NAME].filter((x) => {
+    //     return (x !== null);
+    // });
 
-    // // By default, we'll use a simple string literal
-    // return (
-    //     types.jsxAttribute(
-    //         types.jsxIdentifier(BEMPropTypes.CLASSNAME),
-    //         types.stringLiteral(CLASS_NAME)
-    //     )
-    // );
 };
-
-// const getConditionalExpression = (mod: ObjectProperty, modsIterator: Generator<string, string, string>) => {
-//     if (!mod) {
-//         return;
-//     }
-
-//     const modValue = modsIterator.next().value;
-
-//     if (!modValue) {
-//         return;
-//     }
-
-//     return types.conditionalExpression(
-//         mod.value as Exclude<types.Expression, types.RestElement>,
-//         types.stringLiteral(modValue),
-//         types.stringLiteral(EMPTY)
-//     );
-// };
