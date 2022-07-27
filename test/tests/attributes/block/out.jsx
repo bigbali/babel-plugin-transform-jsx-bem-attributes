@@ -8,8 +8,8 @@ const Block = () => {
             <div className="Block" />
             <div className="Block" />
             <div className="Block0 Block1 Block2" />
-            <div block="" />
-            <div block={""} />
+            <div />
+            <div />
             <div />
         </>;
 };

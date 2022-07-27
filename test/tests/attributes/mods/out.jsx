@@ -18,22 +18,23 @@ const func = () => true;
     <div />
     <div className="Block-Elem Block-Elem_Mods" />
     <div className="Block-Elem" />
+    <div className={`Block-Elem${(() => typeof object === 'object')() ? " Block-Elem_m1" : ""}${(() => typeof object === 'object')() ? " Block-Elem_m2" : ""}`} />
     <div className="Block-Elem Block-Elem_p1 Block-Elem_p2" />
     <div className="Block-Elem Block-Elem_p1" />
-    <div className={`Block-Elem ${func() ? "Block-Elem_p1" : ""}`} />
-    <div className={`Block-Elem ${object !== func ? "Block-Elem_p1" : ""}`} />
+    <div className={`Block-Elem${func() ? " Block-Elem_p1" : ""}`} />
+    <div className={`Block-Elem${object !== func ? " Block-Elem_p1" : ""}`} />
     <div className="Block-Elem Block-Elem_" /> {
     /* undefined */
   }
-    <div className={`Block-Elem ${func() ? "Block-Elem_" : ""}`} /> {
+    <div className={`Block-Elem${func() ? " Block-Elem_" : ""}`} /> {
     /* undefined */
   }
     <div className="Block-Elem Block-Elem_" />
-    <div className={`Block-Elem ${func() ? "Block-Elem_" : ""}`} />
+    <div className={`Block-Elem${func() ? " Block-Elem_" : ""}`} />
     <div className="Block-Elem Block-Elem_cp1" />
-    <div className={`Block-Elem ${func() ? "Block-Elem_cp1" : ""}`} />
+    <div className={`Block-Elem${func() ? " Block-Elem_cp1" : ""}`} />
     <div className="Block-Elem" />
-    <p className={`Block-Message ${true !== false ? "Block-Message_hello" : ""}`}>
+    <p className={`Block-Message${true !== false ? " Block-Message_hello" : ""}`}>
         {otherobject.p2}
     </p>
 </div>;

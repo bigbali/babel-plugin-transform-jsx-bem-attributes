@@ -224,7 +224,7 @@ export const construct = (bemProps: BEMProps, isBlockTopLevel: boolean) => {
     const SPACE_AFTER_BLOCK = _block && (_elem || _mods || _className)
         ? WHITESPACE
         : EMPTY;
-    const SPACE_AFTER_ELEM = _elem && (_mods || _conditionalExpressions.length)
+    const SPACE_AFTER_ELEM = _elem && (_className || _mods) && !(_conditionalExpressions.length > 0)
         ? WHITESPACE
         : EMPTY;
     const SPACE_AFTER_MODS = _mods && _className
@@ -278,7 +278,7 @@ const getConditionalExpression = (mod: ObjectProperty, modsIterator: Generator<s
 
     return types.conditionalExpression(
         mod.value as Exclude<types.Expression, types.RestElement>,
-        types.stringLiteral(modValue),
+        types.stringLiteral(' ' + modValue),
         types.stringLiteral(EMPTY)
     );
 };

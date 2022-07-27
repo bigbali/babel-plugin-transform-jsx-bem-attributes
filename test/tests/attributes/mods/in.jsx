@@ -6,6 +6,7 @@ const func = () => true;
     <div mods="Mods" />
     <div elem="Elem" mods="Mods" />
     <div elem="Elem" mods={object} />
+    <div elem="Elem" mods={{ m1: (() => typeof object === 'object')(), m2: (() => typeof object === 'object')() }} />
     <div elem="Elem" mods={{ p1: true, p2: true }} />
     <div elem="Elem" mods={{ p1: true, p2: false }} />
     <div elem="Elem" mods={{ p1: func() }} />

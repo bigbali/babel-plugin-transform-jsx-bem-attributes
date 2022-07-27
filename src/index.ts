@@ -144,11 +144,11 @@ const traverseJSXElementTree = (element: NodePath<babel.types.JSXElement>, block
     // The reason for not removing it directly in the loop
     // is that it messes up the indexes of the attributes, leading to skipped elements.
     const attributePaths = element.get('openingElement.attributes') as NodePath<JSXAttribute>[];
-    if ((bemProps.block && hasFoundValidBlock) || bemProps.elem || bemProps.mods) {
-        attributeIndexesToRemove.forEach(attributeIndex => {
-            attributePaths[attributeIndex].remove();
-        });
-    }
+    attributeIndexesToRemove.forEach(attributeIndex => {
+        attributePaths[attributeIndex].remove();
+    });
+    // if ((bemProps.block && hasFoundValidBlock) || bemProps.elem || bemProps.mods) {
+    // }
 
     // When block inheritance is disabled, we will need to have defined on every line a new block,
     // therefore hasFoundValidBlock would be always true. So, to correctly check if block is top level,
