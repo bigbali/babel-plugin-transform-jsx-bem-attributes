@@ -1,9 +1,12 @@
 # A plugin for Babel that allows converting 'block', 'elem' and 'mods' props into proper 'className'
+## Important note
+This plugin is experimental, and a newer version is already in the works, which will add support for many more features.
+Consider the current version of this plugin deprecated.
 
 # Note: this documentation needs to be updated!
 
 ## TypeScript
-If you are going to be using this plugin with TypeScript, you'll need a `<filename>.d.ts` file, in which you will have declared at the top of the file:
+If you are going to be using this plugin with TypeScript, you'll need a `<any-filename>.d.ts` file, in which you will have declared at the top of the file:
     
     /// <reference types="babel-plugin-transform-jsx-bem-attributes" />
 
@@ -26,7 +29,7 @@ It converts 'block', 'elem' and 'mods' attributes into 'className', which allows
 - className: string | string[] → will be appended to the previously constructed class
 ## Configuration:
 
-You can provide these environment variables:
+You can provide these environment variables: [NEVERMIND, DOES NOT WORK!]
 - BEM_JSX_DISABLE_BLOCK_INHERITANCE → set this to any truthy string to disable passing 'block' down from parent to child (in this case, you will have to define 'block' on each JSX element)
 - BEM_JSX_ELEM_CONNECTOR → use this to connect 'elem' to 'block'. Default: '-'.
 - BEM_JSX_MODS_CONNECTOR → use this to connect 'mods' to 'elem'. Default: '_'.
