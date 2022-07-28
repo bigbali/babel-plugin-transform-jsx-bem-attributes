@@ -8,6 +8,7 @@
             "../lib/index",
             {
                 // "allowStringLiteral": false
+                "allowIdentifier": true
             }
         ]
     ],

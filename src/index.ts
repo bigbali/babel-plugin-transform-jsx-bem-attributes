@@ -32,7 +32,8 @@ type Options = {
     allowCallExpression: boolean,
     allowObjectExpression: boolean,
     allowIdentifier: boolean,
-    allowFalsyValue: boolean
+    allowFalsyValue: boolean,
+    arrayMaxLength: number
 };
 
 const DEFAULT_OPTIONS: Options = {
@@ -42,7 +43,8 @@ const DEFAULT_OPTIONS: Options = {
     allowCallExpression: true,
     allowObjectExpression: true,
     allowIdentifier: false,
-    allowFalsyValue: false
+    allowFalsyValue: false,
+    arrayMaxLength: 3
 };
 
 let OPTIONS = DEFAULT_OPTIONS;
@@ -157,6 +159,10 @@ const traverseJSXElementTree = (element: NodePath<types.JSXElement>, block: Bloc
             } else if (types.isTemplateLiteral(expression)) {
                 assignOrThrow(attrName, attrPath as NPJSXAttribute, expression, 'allowTemplateLiteral');
             } else if (types.isArrayExpression(expression)) {
+                if (expression.elements.length > OPTIONS.arrayMaxLength) {
+                    throwError(attrPath.buildCodeFrameError(`Array length exceeds maximal length: ${OPTIONS.arrayMaxLength}.`));
+                }
+
                 assignOrThrow(attrName, attrPath as NPJSXAttribute, expression, 'allowArrayExpression');
             } else if (types.isIdentifier(expression)) {
                 OPTIONS.allowIdentifier && assignValue(attrName, expression) || throwError(attrPath.buildCodeFrameError(
@@ -210,12 +216,14 @@ const traverseJSXElementTree = (element: NodePath<types.JSXElement>, block: Bloc
     //     : hasFoundBlock;
 
     const classNameAttribute = constructClassNameAttribute(BEM_PROPS, isBlockInherited, element);
-    console.log(classNameAttribute);
+    // console.log(classNameAttribute);
 
-    element.node.openingElement.attributes.push(types.jsxAttribute(
-        types.jsxIdentifier('className'), // @ts-ignore
-        types.jsxExpressionContainer(classNameAttribute)
-    ));
+    if (classNameAttribute) {
+        element.node.openingElement.attributes.push(types.jsxAttribute(
+            types.jsxIdentifier('className'), // @ts-ignore
+            types.jsxExpressionContainer(classNameAttribute)
+        ));
+    }
     // if (classNameAttribute) {
     //     const { value } = classNameAttribute;
 

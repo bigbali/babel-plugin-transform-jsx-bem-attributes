@@ -1,33 +1,72 @@
-"use strict";Object.defineProperty(exports, "__esModule", { value: true });exports.className = exports.App = void 0;var App = function App() {
+"use strict";Object.defineProperty(exports, "__esModule", { value: true });exports.className = exports.BLOCK = exports.App = void 0;var App = function App() {
   function func() {};
   var obj = { a: 0, b: 1 };
 
   return (
-    <div x={'no'} className={"Block"}>
-            <span className={`${"Block"}`} />
-            <span className={`${"Block"}`} />
-            <span className={`${"Block"}`} />
-            <span className={`${"Block"}`} />
-            <span className={`${"Block"}`} />
+    <div x={'no'} className={"Block0"}>
+            <span />
+            <span />
+            <span />
+            <span />
+            <span />
+            <div x={'yes'} className={"Block1"}>
+                <span />
+                <span />
+                <span />
+                <span />
+                <span />
+            </div>
+            <div x={'maybe'} className={`${func()}`}>
+                <span />
+                <span />
+                <span />
+                <span />
+                <span />
+            </div>
+            <div x={'maybe'} className={"B0 B1 B2"}>
+                <span />
+                <span />
+                <span />
+                <span />
+                <span />
+            </div>
         </div>);
 
 };exports.App = App;
 
 var className = function className() {
   return (
-    <div className={"0ClassName"}>
-            <div className={`${"1ClassName"}`} />
-            <div className={`${'2ClassName0'}${'2ClassName1'}`} />
-            <div className={`${'3ClassName0'}${`${''}`}`} />
-            <div className={`${'4ClassName0'}${`${null}`}`} />
-            <div className={`${`${''}`}${`${''}`}`} />
-            <div className={`${`${''}`}${'6ClassName1'}`} />
-            <div className={``} />
-            <div className={`${`${func()}`}`} />
-            <div className={`${`${func()}`}`} />
-            <div className={`${`PRE ${func()} POST`}`} />
-            <div className={`${`${func()}`}${`${obj}`}`} />
-            <div className={`${`PRE ${func()}${obj} POST`}`} />
+    <div>
+            <div />
+            <div />
+            <div />
+            <div />
+            <div />
+            <div />
+            <div />
+            <div />
+            <div />
+            <div />
+            <div />
+            <div />
         </div>);
 
 };exports.className = className;
+
+var BLOCK = function BLOCK() {
+  return (
+    <main className={"B"}>
+            <span className={`${func()}`} />
+            <span className={`${obj}`} />
+            <span className={`PRE ${func()} POST`} />
+            <span className={`${`${`PRE0 ${func()} POST0`}`}${`${`PRE1 ${func()} POST1`}`}`} />
+            <span className={"B0 B1 B2"} />
+            <span className={"B0 B2"} />
+            <span className={`B0${` ${func()}`} B2`} />
+            <span className={`${`${func()}`} B2`} />
+            <span className={`${`${func()}`} B1 B2`} />
+            <span className={`${`${func()}`} B1`} />
+            <span className={`${`${func()}${`${[func(), func()].some((f) => !!f())() ? " " : ""}`}`}${`${func()}${`${[func()].some((f) => !!f())() ? " " : ""}`}`}${`${func()}`}`} />
+        </main>);
+
+};exports.BLOCK = BLOCK;
