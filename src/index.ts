@@ -182,41 +182,9 @@ const traverseJSXElementTree = (element: NodePath<types.JSXElement>, block: Bloc
         attrPathsToRemove.push(attrPath as NPJSXAttribute);
     });
 
-    // if (!isClassNameOnly) { // We cannot remove attributes directly in the main loop, as it would mess with the indexes
-    // }
-
     removeAttrPaths(attrPathsToRemove);
-    // If there was no new 'block' defined on the element, but 'elem' or 'mods' were
-    // if (!hasFoundBlock && (bemProps.elem || bemProps.mods)
-    //     && DISABLE_BLOCK_INHERITANCE()) {
-    //     handleUndefinedBlock(
-    //         bemProps.block,
-    //         htmlTagName as JSXIdentifier,
-    //         loc as SourceLocation
-    //     );
-    // }
-
-
-    // When block inheritance is disabled, we will need to have defined on every line a new block,
-    // therefore hasFoundBlock would be always true. So, to correctly check if block is top level,
-    // compare the newly assigned block to the one from the previous iteration.
-    // (if they match => they are the same, which means we have in fact *not* found a new block)
-    // If you are trying to understand what is happening below, please forgive me :|
-    // const isBlockTopLevelEvaluation = typeof bemProps.block === 'string'
-    //     ? (hasFoundBlock && bemProps.block !== block)
-    //     : isArray(bemProps.block) && isArray(block) // When both are arrays, compare them
-    //         ? hasFoundBlock && JSON.stringify(bemProps.block) === JSON.stringify(block)
-    //         : ( // When they have differing types, we know block is top level
-    //             isArray(bemProps.block) && typeof block === 'string'
-    //             || isArray(block) && typeof bemProps.block === 'string'
-    //         );
-
-    // const isBlockTopLevel = DISABLE_BLOCK_INHERITANCE()
-    //     ? isBlockTopLevelEvaluation || (!block && hasFoundBlock)
-    //     : hasFoundBlock;
 
     const classNameAttribute = constructClassNameAttribute(BEM_PROPS, isBlockInherited, element);
-    // console.log(classNameAttribute);
 
     if (classNameAttribute) {
         element.node.openingElement.attributes.push(types.jsxAttribute(
@@ -224,18 +192,6 @@ const traverseJSXElementTree = (element: NodePath<types.JSXElement>, block: Bloc
             types.jsxExpressionContainer(classNameAttribute)
         ));
     }
-    // if (classNameAttribute) {
-    //     const { value } = classNameAttribute;
-
-    //     if ((types.isStringLiteral(value) && value.value)
-    //         || types.isJSXExpressionContainer(value)) {
-    //         attributes.push(classNameAttribute);
-    //     }
-    // }
-
-    // @ts-ignore
-    // attrPaths.push(BEM_PROPS);
-    // console.log(attrPaths);
 
     element.get('children').forEach(childElement => { // Here happens the recursive traversal
         if (types.isJSXElement(childElement.node)) {
@@ -243,38 +199,6 @@ const traverseJSXElementTree = (element: NodePath<types.JSXElement>, block: Bloc
         }
     });
 };
-
-// const handleUndefinedBlock = (block: Block, htmlTagName: JSXIdentifier, location: SourceLocation) => {
-//     const { name } = htmlTagName;
-//     const {
-//         start: {
-//             line,
-//             column
-//         } = {
-//             line: 'unknown',
-//             column: 'unknown'
-//         },
-//     } = location || {};
-
-//     const reducer = (acc: string, value: StringLiteral) => {
-//         const SEPARATOR = (acc && value.value)
-//             ? `${COMMA}${WHITESPACE}`
-//             : EMPTY;
-
-//         return `${acc}${SEPARATOR}${value.value}`;
-//     };
-
-//     const inheritedBlock = isArray(block)
-//         ? block.reduce(reducer, EMPTY)
-//         : block;
-//     const inheritedMessage = inheritedBlock
-//         ? `Inherited [${inheritedBlock}], but block inheritance is disabled.`
-//         : 'Did not inherit from parent.';
-
-//     const message = `Block is not defined on <${name}> at line ${line}, column ${column}. ${inheritedMessage}`;
-
-//     throw Error(message);
-// };
 
 /**
  * A wrapper around the 'throw' keyword to allow use in logical expressions.

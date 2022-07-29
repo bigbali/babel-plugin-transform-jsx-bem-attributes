@@ -12,9 +12,6 @@ import {
 const EMPTY_STRING = '';
 const SPACE = ' ';
 
-// attr out => str lit | template lit
-// attr in => str, expression, (str | expression)[]
-
 const getTemplateLiteral = (value: types.Expression) => types.templateLiteral(
     [
         types.templateElement({ raw: '' }, false),
@@ -29,6 +26,8 @@ const getArray = (value: types.Expression | null) => {
     if (value === null) {
         return null;
     }
+
+    // TODO let's not convert to template
 
     const array: (types.StringLiteral | types.TemplateLiteral)[] = [];
 
@@ -76,7 +75,7 @@ const getArray = (value: types.Expression | null) => {
 type x = types.StringLiteral | types.TemplateLiteral;
 export const reduceBlock = (
     blocks: (types.StringLiteral | types.TemplateLiteral)[]
-): types.StringLiteral | types.TemplateLiteral => {
+): types.StringLiteral | types.TemplateLiteral | null => {
     const block = blocks.reduce((previous: x, current: x, index): x => {
         if (types.isTemplateLiteral(previous)) {
             if (types.isStringLiteral(current)) {
@@ -94,12 +93,20 @@ export const reduceBlock = (
 
                 const functionCalls = blocks.reduce((prev, cur, i) => {
                     if (i > index) {
-                        if (types.isTemplateLiteral(cur)) {
+                        if (types.isTemplateLiteral(cur)) { // recursion?
                             cur.expressions.forEach((expr) => {
                                 if (types.isCallExpression(expr)) {
                                     prev.push(expr);
                                 }
+                                if (types.isTemplateLiteral(expr)) {
+                                    expr.expressions.forEach((sexpr) => {
+                                        if (types.isCallExpression(sexpr)) {
+                                            prev.push(sexpr);
+                                        }
+                                    });
+                                }
                             });
+
                         }
                     }
                     return prev;
@@ -157,7 +164,7 @@ export const reduceBlock = (
                 ? SPACE
                 : EMPTY_STRING;
 
-            if (types.isStringLiteral(current)) {
+            if (types.isStringLiteral(current) && current.value) {
                 previous.value = `${previous.value}${SPACE_AFTER_PREVIOUS}${current.value}`;
             }
 
@@ -172,6 +179,13 @@ export const reduceBlock = (
                             cur.expressions.forEach((expr) => {
                                 if (types.isCallExpression(expr)) {
                                     prev.push(expr);
+                                }
+                                if (types.isTemplateLiteral(expr)) {
+                                    expr.expressions.forEach((sexpr) => {
+                                        if (types.isCallExpression(sexpr)) {
+                                            prev.push(sexpr);
+                                        }
+                                    });
                                 }
                             });
                         }
@@ -239,6 +253,14 @@ export const reduceBlock = (
         return previous;
     }, types.stringLiteral(EMPTY_STRING));
 
+    if (
+        types.isStringLiteral(block) && !block.value
+        || (types.isTemplateLiteral(block) && block.expressions.length === 0
+            && block.quasis.every((quasi) => !quasi.value.raw))
+    ) {
+        return null;
+    }
+
     return block;
 };
 
@@ -266,34 +288,10 @@ export default function constructClassNameAttribute(
     isBlockInherited: boolean,
     element: NodePath<types.JSXElement>
 ) {
-    // const ARRAY_CLASS_NAME = [...getClassNameArray(BEM_PROPS)];
-    // const ARRAY_BLOCK = [...getBlockArray(BEM_PROPS)];
-    // const ARRAY_ELEM = [...getElemArray(BEM_PROPS)];
-
-    // const BLOCK = reduceBlock(ARRAY_BLOCK, isBlockInherited) || [];
-
-    // // const ELEM = reduceElem(ARRAY_BLOCK, ARRAY_ELEM);
-
-    // const x = [...BLOCK, ...ARRAY_CLASS_NAME].filter(element => element !== null);
-
-    // // return ARRAY_BLOCK;
-    // return types.templateLiteral(
-    //     [
-    //         types.templateElement({ raw: '' }),
-    //         ...x.map(() => types.templateElement({ raw: '' }))
-    //     ],
-    //     // [
-    //     //     types.templateElement({ raw: '' }, false),
-    //     //     types.templateElement({ raw: '' }, true)
-    //     // ],
-    //     // @ts-ignore
-    //     x
-    // );
 
     const { block } = BEM_PROPS;
     const _BLOCK_ARRAY = getArray(block);
     const _BLOCK = isBlockInherited || !_BLOCK_ARRAY ? null : reduceBlock(_BLOCK_ARRAY);
-    // console.log(_BLOCK_ARRAY);
 
     return _BLOCK;
 };

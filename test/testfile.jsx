@@ -53,20 +53,43 @@ export const className = () => {
     );
 }
 
+const f = () => 'F';
+const f1 = () => 'F1';
+const f2 = () => 'F2';
+const f3 = () => 'F3';
+const o = {
+    p0: 'P0',
+    p1: 'P1',
+    p2: 'P2'
+};
+
 export const BLOCK = () => {
     return (
         <main block="B">
-            <span block={func()} />
-            <span block={obj} />
-            <span block={`PRE ${func()} POST`} />
-            <span block={[`PRE0 ${func()} POST0`, `PRE1 ${func()} POST1`]} />
+            <span block="" />
+            <span block={'B'} />
+            <span block={`B`} />
+            <span block={``} />
+            <span block={`${f()}`} />
+            <span block={`PRE${f()}`} />
+            <span block={`${f()}POST`} />
+            <span block={`PRE${f()}POST`} />
+            <span block={f()} />
+            <span block={p} />
+            <span block={`PRE${p}POST`} />
             <span block={['B0', 'B1', 'B2']} />
             <span block={['B0', '', 'B2']} />
-            <span block={['B0', func(), 'B2']} />
-            <span block={['', func(), 'B2']} />
-            <span block={[func(), 'B1', 'B2']} />
-            <span block={[func(), 'B1', '']} />
-            <span block={[func(), func(), func()]} />
+            <span block={['B0', 'B1', f()]} />
+            <span block={['B0', f(), 'B2']} />
+            <span block={[f(), 'B1', 'B2']} />
+            <span block={['', f(), 'B2']} />
+            <span block={['B1', f(), '']} />
+            <span block={[f(), 'B1', '']} />
+            <span block={['B0', 'B1', o]} />
+            <span block={['B0', f(), o]} />
+            <span block={[f1(), f2(), f3()]} />
+            <span block={[`${f1()}`, f2(), f3()]} />
+            <span block={[`${f1()}`, `${f2()}`, `${f3()}`]} />
         </main>
     );
 }
