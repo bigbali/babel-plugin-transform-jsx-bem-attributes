@@ -4,21 +4,34 @@
         "module": "commonjs",
         "moduleResolution": "node",
         "lib": [
-            "es2020",
-            "dom"
+            "ES2022"
         ],
         "outDir": "./lib",
         "forceConsistentCasingInFileNames": true,
         "strict": true,
         "esModuleInterop": true,
         "declaration": true,
-        "baseUrl": "."
+        "baseUrl": ".",
+        "allowJs": true,
+        "checkJs": true,
+        "incremental": true,
+        "pretty": true,
+        "composite": false
     },
+    "types": [
+        "react",
+        "node"
+    ],
     "include": [
         "src",
         "index.d.ts"
     ],
     "exclude": [
-        "lib",
+        "lib"
     ],
+    "references": [
+        {
+            "path": "./test/tsconfig.json"
+        }
+    ]
 }

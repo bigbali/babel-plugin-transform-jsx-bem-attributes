@@ -18,7 +18,7 @@ import constructClassNameAttribute from './construct';
 
 export type NPJSXAttribute = NodePath<types.JSXAttribute>;
 
-type SupportedTypes = types.ArrayExpression
+export type SupportedTypes = types.ArrayExpression
     | types.CallExpression
     | types.ObjectExpression
     | types.StringLiteral

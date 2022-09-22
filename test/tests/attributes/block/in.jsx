@@ -1,12 +1,6 @@
-const Block = () => {
-    return (
-        <>
-            <div block="Block" />
-            <div block={"Block"} />
-            <div block={["Block0", "Block1", "Block2"]} />
-            <div block="" />
-            <div block={""} />
-            <div block={["", "", ""]} />
-        </>
-    );
-}
+const BLOCK_STRING = (
+    <div block="BLOCK" />
+);
+const BLOCK_STRING_EMPTY = (
+    <div block="" />
+);

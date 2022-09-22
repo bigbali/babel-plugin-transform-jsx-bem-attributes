@@ -1,12 +1,6 @@
-const Block = () => {
-    return (
-        <>
-            <div className="Block" />
-            <div className="Block" />
-            <div className="Block0 Block1 Block2" />
-            <div />
-            <div />
-            <div />
-        </>
-    );
-}
+const BLOCK_STRING = (
+    <div className="BLOCK" />
+);
+const BLOCK_STRING_EMPTY = (
+    <div />
+);
