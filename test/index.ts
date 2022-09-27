@@ -1,13 +1,12 @@
-import { transformSync, parseSync, parse, ParseResult } from '@babel/core';
-import { File } from '@babel/types';
+import { transformSync } from '@babel/core';
 import { readFileSync, readdirSync } from 'fs';
-import path, { parse as parsePath, resolve } from 'path';
+import path, {
+    parse as parsePath,
+    resolve
+} from 'path';
 import {
-    // getClassNames,
-    getClassName,
     generateFile,
     CONFIG,
-    parseClassNames
 } from './utils.js';
 
 // const TEST_MAP = {
@@ -24,7 +23,6 @@ describe('Transpilation process happens without error', () => {
     // const featureTests = readdirSync(featuresDirectory);
 
     attributeTests.forEach((attributePath) => {
-        if (attributePath !== "block") return;
         testAttribute(attributesDirectory, attributePath);
     });
 
@@ -33,53 +31,25 @@ describe('Transpilation process happens without error', () => {
     // });
 });
 
-function recursivelyRemovePositionalIndicators(ast: ParseResult): void {
-    for (let branch in ast) {
-        if (branch === "loc") {
-            delete ast[branch as keyof ParseResult];
-        }
-        else {
-            if (ast[branch as keyof ParseResult]) {
-                recursivelyRemovePositionalIndicators(ast[branch as keyof ParseResult] as any)
-            }
-        }
-    }
-}
-
 function testAttribute(attributesDirectory: string, attributePath: string) {
     const attributeDirectory = resolve(attributesDirectory, attributePath);
     const { name: nameOfTest } = parsePath(attributePath);
 
-    const input = readFileSync(resolve(attributeDirectory, 'in.jsx'), 'utf-8');
-    const {
-        code: output,
-        ast: outputAst
-    } = transformSync(input, CONFIG)!;
-
-    output && generateFile(attributeDirectory, 'out.jsx', output);
-
+    const input = readFileSync(
+        resolve(attributeDirectory, 'in.jsx'),
+        'utf-8'
+    );
     const expected = readFileSync(
         resolve(attributeDirectory, 'expected.jsx'),
         'utf-8'
     );
-    const expectedAst = parse(expected, CONFIG);
+    const { code: output } = transformSync(input, CONFIG)!;
 
-    // recursivelyRemovePositionalIndicators(expectedAst!);
-
-
-    // const outputAst = parse(output.code, CONFIG);
-    // const expectedAst = parse(expected, CONFIG);
-
-    // const actualClassName = getClassName(outputAst);
-    // const expectedClassName = getClassName(expectedAst);
-
-
+    output && generateFile(attributeDirectory, 'out.jsx', output);
 
     it(`Output matches expected: ${nameOfTest}`, () => {
         expect(output).not.toBe(null);
-        expect(outputAst).toEqual(expectedAst);
-
-
+        expect(output?.trim()).toEqual(expected.trim());
     });
 }
 
@@ -176,22 +146,3 @@ function testAttribute(attributesDirectory: string, attributePath: string) {
 //         });
 //     });
 // }
-
-
-// export const CONFIG = {
-//     plugins: [
-//         '@babel/plugin-syntax-jsx',
-//         require.resolve('../lib/index.js')
-//     ],
-//     ast: true
-// };
-
-
-// describe('Reworked plugin doesn\'t throw', () => {
-//     // const input = readFileSync(path.resolve(__dirname, 'testfile.jsx'));
-//     it('does something', () => {
-//         const output = transformFileSync(path.resolve(__dirname, 'testfile.jsx'));
-//         writeFileSync(path.resolve(__dirname, 'testfile_out.jsx'), output.code, CONFIG);
-
-//     })
-// });

@@ -183,6 +183,46 @@ export default function constructClassNameAttribute(
     const _BLOCK_ARRAY = filter(block, element);
     const _BLOCK = isBlockInherited || !_BLOCK_ARRAY ? null : reduceBlock(_BLOCK_ARRAY);
 
+
+    // IMPLEMENTATION IDEA
+    /*
+        str __BLOCK__
+        str __ELEM__
+        str __MOD__
+        str __CLASS__
+
+        for block of blocks
+            if block is not valid
+                pass
+
+            if block is valid
+                __BLOCK__ += `${block}${?SPACE}`
+
+                for elem of elems
+                    if elem is not valid
+                        pass
+
+                    if elem is valid
+                        __elem__ `${block}-${elem}`
+                        __ELEM__ += `${__elem__}${?SPACE}`
+
+                        for mod of mods
+                            if mod is not valid
+                                pass
+                            if mod is valid
+                                __mod__ = `${__elem__}_${mod}`
+                                __MOD__ += `${__mod__}${?SPACE}`
+
+            if __ELEM__ is empty
+                for mod of mods
+                    if mod is not valid
+                        pass
+                    if mod is valid
+                        __mod__ = `${__elem__}_${mod}`
+                        __MOD__ += `${__mod__}${?SPACE}`
+
+    */
+
     return _BLOCK;
 };
 

@@ -1,12 +1,4 @@
-const Elem = () => {
-    return (
-        <>
-            <div elem="Elem" />
-            <div elem={"Elem"} />
-            <div elem={["Elem0", "Elem1", "Elem2"]} />
-            <div elem="" />
-            <div elem={""} />
-            <div elem={["", "", ""]} />
-        </>
-    );
-}
+const ELEM_STRING = <div elem="ELEM" />;
+const ELEM_STRING_IN_CONTAINER = <div elem={"ELEM"} />;
+const ELEM_STRING_EMPTY = <div elem="" />;
+const ELEM_STRING_EMPTY_IN_CONTAINER = <div elem={""} />;

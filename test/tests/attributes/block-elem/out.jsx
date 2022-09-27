@@ -1,44 +1,8 @@
 /*
     This file is generated automatically.
-    All your edits will be lost upon regeneration.
 */
 
-const BlockElem = () => {
-  return <>
-            <div className={"Block"} />
-            <div className={"Block"} />
-            <div className={"Block"} />
-
-            <div className={"Block"} />
-            <div className={"Block"} />
-            <div className={"Block"} />
-
-            <div className={"Block0 Block1 Block2"} />
-            <div className={"Block0 Block1 Block2"} />
-            <div className={"Block0 Block1 Block2"} />
-
-            <div className={"Block"} />
-            <div className={"Block"} />
-            <div className={"Block"} />
-
-            <div className={"Block"} />
-            <div className={"Block"} />
-            <div className={"Block"} />
-
-            <div className={"Block0 Block1 Block2"} />
-            <div className={"Block0 Block1 Block2"} />
-            <div className={"Block0 Block1 Block2"} />
-
-            <div />
-            <div />
-            <div />
-
-            <div />
-            <div />
-            <div />
-
-            <div />
-            <div />
-            <div />
-        </>;
-};
+const BLOCK_STRING__ELEM_STRING = <div className="BLOCK" />;
+const BLOCK_STRING__ELEM_STRING_EMPTY = <div className="BLOCK" />;
+const BLOCK_STRING_EMPTY__ELEM_STRING = <div />;
+const BLOCK_STRING_EMPTY__ELEM_STRING_EMPTY = <div />;

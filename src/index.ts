@@ -8,7 +8,6 @@ import {
     BEMProps,
     BEMPropTypes,
     Block,
-    isArray
 } from './types';
 import {
     BEM_PROP_TYPES
@@ -18,7 +17,8 @@ import constructClassNameAttribute from './construct';
 
 export type NPJSXAttribute = NodePath<types.JSXAttribute>;
 
-export type SupportedTypes = types.ArrayExpression
+export type SupportedTypes =
+    types.ArrayExpression
     | types.CallExpression
     | types.ObjectExpression
     | types.StringLiteral
@@ -188,8 +188,10 @@ const traverseJSXElementTree = (element: NodePath<types.JSXElement>, block: Bloc
 
     if (classNameAttribute) {
         element.node.openingElement.attributes.push(types.jsxAttribute(
-            types.jsxIdentifier('className'), // @ts-ignore
-            types.jsxExpressionContainer(classNameAttribute)
+            types.jsxIdentifier('className'),
+            types.isStringLiteral(classNameAttribute) // If attribute is already a string, don't put it in a container
+                ? classNameAttribute
+                : types.jsxExpressionContainer(classNameAttribute)
         ));
     }
 

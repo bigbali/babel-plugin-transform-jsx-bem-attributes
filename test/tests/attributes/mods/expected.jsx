@@ -1,15 +1,2 @@
-const Mods = () => {
-    return (
-        <>
-            <div />
-            <div />
-            <div />
-            <div />
-            <div />
-            <div />
-            <div />
-            <div />
-            <div />
-        </>
-    );
-}
+const MODS_STRING = <div />;
+const MODS_STRING_EMPTY = <div />;

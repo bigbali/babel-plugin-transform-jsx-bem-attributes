@@ -38,42 +38,22 @@ describe('Transpilation process happens without error', () => {
     const attributeTests = (0, fs_1.readdirSync)(attributesDirectory);
     // const featureTests = readdirSync(featuresDirectory);
     attributeTests.forEach((attributePath) => {
-        if (attributePath !== "block")
-            return;
         testAttribute(attributesDirectory, attributePath);
     });
     // featureTests.forEach((featurePath) => {
     //     testFeature(featuresDirectory, featurePath);
     // });
 });
-function recursivelyRemovePositionalIndicators(ast) {
-    for (let branch in ast) {
-        if (branch === "loc") {
-            delete ast[branch];
-        }
-        else {
-            if (ast[branch]) {
-                recursivelyRemovePositionalIndicators(ast[branch]);
-            }
-        }
-    }
-}
 function testAttribute(attributesDirectory, attributePath) {
     const attributeDirectory = (0, path_1.resolve)(attributesDirectory, attributePath);
     const { name: nameOfTest } = (0, path_1.parse)(attributePath);
     const input = (0, fs_1.readFileSync)((0, path_1.resolve)(attributeDirectory, 'in.jsx'), 'utf-8');
-    const { code: output, ast: outputAst } = (0, core_1.transformSync)(input, utils_js_1.CONFIG);
-    output && (0, utils_js_1.generateFile)(attributeDirectory, 'out.jsx', output);
     const expected = (0, fs_1.readFileSync)((0, path_1.resolve)(attributeDirectory, 'expected.jsx'), 'utf-8');
-    const expectedAst = (0, core_1.parse)(expected, utils_js_1.CONFIG);
-    // recursivelyRemovePositionalIndicators(expectedAst!);
-    // const outputAst = parse(output.code, CONFIG);
-    // const expectedAst = parse(expected, CONFIG);
-    // const actualClassName = getClassName(outputAst);
-    // const expectedClassName = getClassName(expectedAst);
+    const { code: output } = (0, core_1.transformSync)(input, utils_js_1.CONFIG);
+    output && (0, utils_js_1.generateFile)(attributeDirectory, 'out.jsx', output);
     it(`Output matches expected: ${nameOfTest}`, () => {
         expect(output).not.toBe(null);
-        expect(outputAst).toEqual(expectedAst);
+        expect(output === null || output === void 0 ? void 0 : output.trim()).toEqual(expected.trim());
     });
 }
 // function testFeature(featuresDirectory, featurePath) {

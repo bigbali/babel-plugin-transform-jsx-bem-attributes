@@ -3,6 +3,9 @@ import { readFileSync, writeFile } from 'fs';
 import { resolve } from 'path';
 
 export const CONFIG: TransformOptions = {
+    presets: [
+        // '@babel/preset-react'
+    ],
     plugins: [
         '@babel/plugin-syntax-jsx',
         require.resolve('../lib/index.js')
@@ -19,7 +22,6 @@ export const CONFIG: TransformOptions = {
 const THIS_FILE_IS_GENERATED_AUTOMATICALLY = `\
 /*
     This file is generated automatically.
-    All your edits will be lost upon regeneration.
 */\n\n`;
 
 export const parseClassNames = (attributeDirectory: string): string[][] => {

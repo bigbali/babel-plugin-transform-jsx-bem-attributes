@@ -1,15 +1,8 @@
 /*
     This file is generated automatically.
-    All your edits will be lost upon regeneration.
 */
 
-const Elem = () => {
-  return <>
-            <div />
-            <div />
-            <div />
-            <div />
-            <div />
-            <div />
-        </>;
-};
+const ELEM_STRING = <div />;
+const ELEM_STRING_IN_CONTAINER = <div />;
+const ELEM_STRING_EMPTY = <div />;
+const ELEM_STRING_EMPTY_IN_CONTAINER = <div />;
