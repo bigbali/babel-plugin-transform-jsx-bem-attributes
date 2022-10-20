@@ -1,5 +1,7 @@
+// bem-attr-skip-file
 const Block = () => {
     return (
+        // bem-attr-skip-file
         <>
             <div block="Block" />
             <div block={"Block"} />

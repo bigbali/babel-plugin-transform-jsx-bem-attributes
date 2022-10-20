@@ -32,7 +32,11 @@ export default function (): Plugin {
     return {
         name: 'transform-bem-props',
         visitor: {
-            JSXElement(element) {
+            JSXElement(element, state) {
+                if (state.file.ast.comments?.some((comment) => comment.value.includes('bem-attr-skip-file'))) {
+                    return;
+                }
+
                 traverseJSXElementTree(element, EMPTY);
 
                 // Don't traverse child nodes, as we will do that manually
@@ -48,6 +52,19 @@ export default function (): Plugin {
  * @param block - Passed to the next iteration to allow block inheritance
  */
 const traverseJSXElementTree = (element: NodePath<babel.types.JSXElement>, block: Block) => {
+    // const comments = element.parentPath.node.leadingComments?.join(element.parentPath.node.innerComments) ;
+    const comments: types.Comment[] = [];
+    element.parentPath.node.leadingComments && comments.push(...element.parentPath.node.leadingComments);
+    element.parentPath.node.innerComments && comments.push(...element.parentPath.node.innerComments);
+    element.parentPath.node.trailingComments && comments.push(...element.parentPath.node.trailingComments);
+    element.node.innerComments && comments.push(...element.node.innerComments);
+    element.node.leadingComments && comments.push(...element.node.leadingComments);
+    element.node.trailingComments && comments.push(...element.node.trailingComments);
+
+    if (comments.length && comments.some((comment) => comment.value.includes('no-traverse'))) {
+        return;
+    };
+
     const {
         node: {
             openingElement: {
@@ -69,6 +86,10 @@ const traverseJSXElementTree = (element: NodePath<babel.types.JSXElement>, block
     let hasFoundValidBlock = false;
 
     attributes.forEach((attribute, index) => {
+        if (types.isJSXSpreadAttribute(attribute)) {
+            return;
+        }
+
         const {
             value: valueNode,
             name: {
