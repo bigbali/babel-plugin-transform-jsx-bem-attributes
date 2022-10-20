@@ -1,19 +1,16 @@
 import { types } from '@babel/core';
 
-export type BEMBaseAttribute = null
-    | types.ArrayExpression
+export type ModsType = types.ObjectExpression
+    | types.FunctionExpression
     | types.CallExpression
     | types.StringLiteral
-    | types.TemplateLiteral;
+    | types.TemplateLiteral
+    | types.Identifier;
 
-// export type Block = BEMBaseAttribute;
-// export type Elem = BEMBaseAttribute;
-// export type Mods = BEMBaseAttribute | types.ObjectExpression;
-// export type ClassName = BEMBaseAttribute;
-export type Block = types.Expression | null;
-export type Elem = types.Expression | null;
-export type Mods = types.Expression | null;
-export type ClassName = types.Expression | null;
+export type Block = types.StringLiteral | null;
+export type Elem = types.StringLiteral | null;
+export type Mods = ModsType | ModsType[] | null;
+export type ClassName = types.StringLiteral | types.JSXExpressionContainer | null;
 
 export interface BEMProps {
     block: Block;
@@ -24,7 +21,7 @@ export interface BEMProps {
 export interface Attribute {
     value: types.StringLiteral | types.JSXExpressionContainer,
     name: {
-        name: `${BEMPropTypes}` & keyof BEMProps
+        name: BEMPropTypes
     };
 };
 

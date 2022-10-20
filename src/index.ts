@@ -13,10 +13,33 @@ import {
     BEM_PROP_TYPES
 } from './constants';
 import removeAttrPaths from './removeAttrPaths';
-import constructClassNameAttribute from './construct';
+import constructClassNameAttribute, { EMPTY_STRING } from './construct';
+
+const SKIP_FILE = '@bem-skip-file';
+const SKIP_ELEMENT = '@bem-skip-element';
+
+const isBlock = (attrName: string): attrName is BEMPropTypes.BLOCK => {
+    return attrName === BEMPropTypes.BLOCK;
+};
+
+const isElem = (attrName: string): attrName is BEMPropTypes.ELEM => {
+    return attrName === BEMPropTypes.ELEM;
+};
+
+const isMods = (attrName: string): attrName is BEMPropTypes.MODS => {
+    return attrName === BEMPropTypes.MODS;
+};
+
+const isClassName = (attrName: string): attrName is BEMPropTypes.CLASSNAME => {
+    return attrName === BEMPropTypes.CLASSNAME;
+};
+
+const isJSXAttribute = (attrPath: NodePath<types.JSXAttribute | types.JSXSpreadAttribute>):
+    attrPath is NodePath<types.JSXAttribute> => {
+    return types.isJSXAttribute(attrPath.node);
+};
 
 export type NPJSXAttribute = NodePath<types.JSXAttribute>;
-
 export type SupportedTypes =
     types.ArrayExpression
     | types.CallExpression
@@ -25,39 +48,83 @@ export type SupportedTypes =
     | types.TemplateLiteral
     | types.Identifier;
 
+export type ModsArrayAbsoluteMaxLength = 1 | 2 | 3;
+
 type Options = {
-    allowStringLiteral: boolean,
-    allowTemplateLiteral: boolean,
-    allowArrayExpression: boolean,
-    allowCallExpression: boolean,
-    allowObjectExpression: boolean,
-    allowIdentifier: boolean,
-    allowFalsyValue: boolean,
-    arrayMaxLength: number
+    plugin: {
+        enable: boolean,
+        error: 'throw' | 'warn'
+    },
+    mod: {
+        allow: boolean,
+        string: boolean,
+        template: boolean,
+        function: boolean,
+        object: boolean,
+        identifier: boolean,
+        array: boolean,
+        arrayMaxLength: ModsArrayAbsoluteMaxLength
+    },
+    className: {
+        allow: boolean
+    }
 };
 
 const DEFAULT_OPTIONS: Options = {
-    allowStringLiteral: true,
-    allowTemplateLiteral: true,
-    allowArrayExpression: true,
-    allowCallExpression: true,
-    allowObjectExpression: true,
-    allowIdentifier: false,
-    allowFalsyValue: false,
-    arrayMaxLength: 3
+    plugin: {
+        enable: true,
+        error: 'throw'
+    },
+    mod: {
+        allow: true,
+        string: true,
+        template: true,
+        function: true,
+        object: true,
+        identifier: true,
+        array: true,
+        arrayMaxLength: 2
+    },
+    className: {
+        allow: true
+    }
 };
 
-let OPTIONS = DEFAULT_OPTIONS;
+const OPTIONS = DEFAULT_OPTIONS;
+
+const hasPlugin = (opts: object): opts is { plugin: Options['plugin'] } => 'plugin' in opts;
+const hasMod = (opts: object): opts is { mod: Options['mod'] } => 'mod' in opts;
+const hasClassName = (opts: object): opts is { className: Options['className'] } => 'className' in opts;
 
 export default function transformJSXBEMAttributes(): Plugin {
     return {
         name: 'transform-jsx-bem-attributes',
-        visitor: {
-            JSXElement(element, { opts }) {
-                OPTIONS = {
-                    ...DEFAULT_OPTIONS,
-                    ...opts
+        pre(this) {
+            if (hasPlugin(this.opts)) {
+                OPTIONS.plugin = {
+                    ...OPTIONS.plugin,
+                    ...this.opts.plugin
                 };
+            }
+            if (hasMod(this.opts)) {
+                OPTIONS.mod = {
+                    ...OPTIONS.mod,
+                    ...this.opts.mod
+                };
+            }
+            if (hasClassName(this.opts)) {
+                OPTIONS.className = {
+                    ...OPTIONS.className,
+                    ...this.opts.className
+                };
+            }
+        },
+        visitor: {
+            JSXElement(element, { file }) {
+                if (file?.ast?.comments?.some((comment) => comment.value.includes(SKIP_FILE))) return;             // skip file
+                if (element.node.leadingComments?.some((comment) => comment.value.includes(SKIP_ELEMENT))) return; // skip element
+                if (!OPTIONS.plugin.enable) return;
+
                 traverseJSXElementTree(element, null);
 
                 // Don't traverse child nodes, as we will do that manually
@@ -75,8 +142,8 @@ export default function transformJSXBEMAttributes(): Plugin {
 const traverseJSXElementTree = (element: NodePath<types.JSXElement>, block: Block) => {
     const openingElement = element.get('openingElement');
     const attrPaths = openingElement.get('attributes');
+    const isBlockInherited = { value: true };
     let isClassNameOnly = true;
-    let isBlockInherited = true;
 
     const BEM_PROPS: BEMProps = {
         block,
@@ -85,51 +152,13 @@ const traverseJSXElementTree = (element: NodePath<types.JSXElement>, block: Bloc
         className: null
     };
 
-    const assignValue = <T>(
-        attrName: keyof BEMProps,
-        attrValue: T,
-        attrKey?: keyof T,
-        attrPath?: NPJSXAttribute
-    ) => {
-        const value = (attrKey ? attrValue[attrKey] : attrValue);
-
-        // @ts-ignore
-        if (!value || types.isArrayExpression(value) && value.elements.length === 0) {
-            if (OPTIONS.allowFalsyValue) {
-                console.warn('An empty array or falsy value was passed in. Disable allowFalsyValue to see where.');
-            } else {
-                attrPath && throwError(attrPath.buildCodeFrameError('Empty array or falsy value was passed in.'));
-            }
-        }
-
-        BEM_PROPS[attrName] = value as SupportedTypes & null;
-
-        if (attrName === BEMPropTypes.BLOCK) {
-            isBlockInherited = false;
-        }
-
-        return true;
-    };
-
-    const assignOrThrow = (
-        attrName: keyof BEMProps,
-        attrPath: NPJSXAttribute,
-        value: SupportedTypes,
-        key: keyof Options
-    ) => {
-        OPTIONS[key] && assignValue(attrName, value) || throwError(attrPath.buildCodeFrameError(
-            `You tried to use a value with type '${value.type}', but '${key}' is explicitly set to false.`
-        ));
-    };
-
-    const attrPathsToRemove: NPJSXAttribute[] = [];
+    const attrPathsToRemove: NodePath<types.JSXAttribute>[] = [];
     attrPaths.forEach(attrPath => {
-        const { node } = attrPath;
-
-        if (types.isJSXSpreadAttribute(node)) {
+        if (!isJSXAttribute(attrPath)) {
             return; // There's not much we can do with spread attributes, so let's skip them
         }
 
+        const { node } = attrPath;
         const {
             value: attrValue,
             name: {
@@ -141,41 +170,34 @@ const traverseJSXElementTree = (element: NodePath<types.JSXElement>, block: Bloc
             return;
         }
 
-        if (attrName !== BEMPropTypes.CLASSNAME) {
+        if (isClassNameOnly && attrName !== BEMPropTypes.CLASSNAME) {
             isClassNameOnly = false;
         }
 
         if (types.isStringLiteral(attrValue)) {
-            assignOrThrow(attrName, attrPath as NPJSXAttribute, attrValue, 'allowStringLiteral');
+            assignString(BEM_PROPS, attrPath, attrName, attrValue);
         }
 
         if (types.isJSXExpressionContainer(attrValue)) {
             const { expression } = attrValue;
 
-            if (types.isStringLiteral(expression)) {
-                assignOrThrow(attrName, attrPath as NPJSXAttribute, expression, 'allowStringLiteral');
-            } else if (types.isCallExpression(expression)) {
-                assignOrThrow(attrName, attrPath as NPJSXAttribute, expression, 'allowCallExpression');
-            } else if (types.isTemplateLiteral(expression)) {
-                assignOrThrow(attrName, attrPath as NPJSXAttribute, expression, 'allowTemplateLiteral');
-            } else if (types.isArrayExpression(expression)) {
-                if (expression.elements.length > OPTIONS.arrayMaxLength) {
-                    throwError(attrPath.buildCodeFrameError(`Array length exceeds maximal length: ${OPTIONS.arrayMaxLength}.`));
-                }
+            if (types.isStringLiteral(expression) && expression.value) {
+                assignString(BEM_PROPS, attrPath, attrName, expression);
+            }
 
-                assignOrThrow(attrName, attrPath as NPJSXAttribute, expression, 'allowArrayExpression');
-            } else if (types.isIdentifier(expression)) {
-                OPTIONS.allowIdentifier && assignValue(attrName, expression) || throwError(attrPath.buildCodeFrameError(
-                    `You tried to use an identifier as a value, but 'allowIdentifier' is set to false.
-                    To enable it, pass "allowIdentifier": true as a plugin option.`
-                ));
-            } else if (types.isObjectExpression(expression) && attrName === BEMPropTypes.MODS) {
-                OPTIONS.allowObjectExpression && assignValue(attrName, expression, 'properties')
-                    || throwError(attrPath.buildCodeFrameError(
-                        'You tried to use an object expression as a value, but \'allowObjectExpression\' is explicitly set to false.'
-                    ));
-            } else {
-                throw attrPath.buildCodeFrameError(`Attribute value of type ${expression.type || 'unknown'} is unsupported.`);
+            if ((types.isFunctionExpression(expression)
+                || types.isCallExpression(expression)
+                || types.isObjectExpression(expression)
+                || types.isTemplateLiteral(expression)
+                || types.isIdentifier(expression))
+                && isMods(attrName)) {
+                assertMods(attrPath);
+
+                BEM_PROPS.mods = expression;
+            }
+
+            if (isClassName(attrName) && !types.isJSXEmptyExpression(expression)) { // className allows any value
+                BEM_PROPS.className = attrValue;
             }
         }
 
@@ -184,16 +206,22 @@ const traverseJSXElementTree = (element: NodePath<types.JSXElement>, block: Bloc
 
     removeAttrPaths(attrPathsToRemove);
 
-    const classNameAttribute = constructClassNameAttribute(BEM_PROPS, isBlockInherited, element);
+    if (!BEM_PROPS.block) {
+        BEM_PROPS.elem && throwError(element, 'An \'elem\' attribute is provided, but \'block\' missing.');
+        // eslint-disable-next-line @typescript-eslint/restrict-plus-operands, max-len
+        BEM_PROPS.mods && throwError(element, 'A \'mods\' attribute is provided, but \'block\' missing.' + JSON.stringify(BEM_PROPS.mods));
 
-    if (classNameAttribute) {
-        element.node.openingElement.attributes.push(types.jsxAttribute(
-            types.jsxIdentifier('className'),
-            types.isStringLiteral(classNameAttribute) // If attribute is already a string, don't put it in a container
-                ? classNameAttribute
-                : types.jsxExpressionContainer(classNameAttribute)
-        ));
+        if (BEM_PROPS.className) {
+            element.node.openingElement.attributes.push(
+                types.jsxAttribute(types.jsxIdentifier('className'), BEM_PROPS.className)
+            );
+        }
+
+        return;
     }
+
+    const classNameAttribute = constructClassNameAttribute(BEM_PROPS, element, isBlockInherited.value);
+    classNameAttribute && element.node.openingElement.attributes.push(classNameAttribute);
 
     element.get('children').forEach(childElement => { // Here happens the recursive traversal
         if (types.isJSXElement(childElement.node)) {
@@ -202,9 +230,107 @@ const traverseJSXElementTree = (element: NodePath<types.JSXElement>, block: Bloc
     });
 };
 
+const assignString = (
+    BEM_PROPS: BEMProps,
+    attrPath: NodePath<types.JSXAttribute>,
+    attrName: BEMPropTypes,
+    expression: types.StringLiteral
+) => {
+    if (expression.value === EMPTY_STRING) {
+        throwError(attrPath, 'Empty string is not a valid value.');
+    }
+    if (isBlock(attrName)) {
+        BEM_PROPS.block = expression;
+        return;
+    }
+    if (isElem(attrName)) {
+        BEM_PROPS.elem = expression;
+        return;
+    }
+    if (isMods(attrName)) {
+        assertMods(attrPath);
+
+        BEM_PROPS.mods = expression;
+        return;
+    }
+    if (isClassName(attrName)) {
+        assertClassName(attrPath);
+
+        BEM_PROPS.className = expression;
+        return;
+    }
+};
+
+const errorMessage = (attr: BEMPropTypes, type: string, detailedType?: string) => {
+    const aOrAn = (detailedType || type).at(0)?.match(/[aeiou]/) ? 'an' : 'a';
+
+    return (
+        `${aOrAn}${detailedType || type} value was passed in for the '${attr}' attribute,
+        but it is explicitly disabled. See '<PLUGIN OPTIONS>.${attr === 'mods' ? 'mod' : attr}.${type}'.`
+    );
+};
+
+const assertMods = (attrPath: NodePath<types.JSXAttribute>) => {
+    if (!OPTIONS.mod.allow) {
+        error(attrPath,
+            `'Mods' is disallowed.
+            See '<PLUGIN OPTIONS>.mod.allow'.`
+        );
+        return;
+    }
+
+    if (!OPTIONS.mod.string && types.isStringLiteral(attrPath.node)) {
+        error(attrPath, errorMessage(BEMPropTypes.MODS, 'string', 'string literal'));
+        return;
+    }
+
+    if (!OPTIONS.mod.template && types.isTemplateLiteral(attrPath.node)) {
+        error(attrPath, errorMessage(BEMPropTypes.MODS, 'template'));
+        return;
+    }
+
+    if (!OPTIONS.mod.function
+        && types.isFunctionExpression(attrPath.node)
+        || types.isCallExpression(attrPath.node)) {
+        error(attrPath, errorMessage(BEMPropTypes.MODS, 'function'));
+        return;
+    }
+
+    if (!OPTIONS.mod.object && types.isObjectExpression(attrPath.node)) {
+        error(attrPath, errorMessage(BEMPropTypes.MODS, 'object'));
+        return;
+    }
+
+    if (!OPTIONS.mod.identifier && types.isIdentifier(attrPath.node)) {
+        error(attrPath, errorMessage(BEMPropTypes.MODS, 'identifier', 'variable identifier'));
+        return;
+    }
+};
+
+const assertClassName = (attrPath: NodePath<types.JSXAttribute>) => {
+    if (!OPTIONS.className.allow) {
+        error(attrPath,
+            `'className' is disallowed.
+            See '<PLUGIN OPTIONS>.className.allow'.`
+        );
+    }
+};
+
+/**
+ * If error mode is 'throw', throw an error when one is found, otherwise warn in the console.
+ */
+const error = (attrPath: NodePath<types.JSXAttribute>, message: string) => {
+    if (OPTIONS.plugin.error === 'throw') {
+        throwError(attrPath, message);
+        return;
+    }
+
+    console.warn(message);
+};
+
 /**
  * A wrapper around the 'throw' keyword to allow use in logical expressions.
  */
-const throwError = (error: Error) => {
-    throw error;
+const throwError = (attrPath: NodePath<types.JSXAttribute | types.JSXElement>, error: string) => {
+    throw attrPath.buildCodeFrameError(error);
 };

@@ -1,8 +1,10 @@
 import { NodePath, types } from '@babel/core';
 import { SupportedTypes } from 'src';
+import { ELEM_CONNECTOR } from './constants';
 import {
     BEMProps,
     Block,
+    ClassName,
     Elem
 } from './types';
 import { filter, purifyTemplate } from './util';
@@ -173,18 +175,41 @@ const reduceElem = (blocks: Block[], elems: Elem[]) => {
 };
 
 
-export default function constructClassNameAttribute(
+const constructClassNameAttribute = (
     BEM_PROPS: BEMProps,
-    isBlockInherited: boolean,
-    element: NodePath<types.JSXElement>
-) {
+    ELEMENT: NodePath<types.JSXElement>,
+    IS_BLOCK_INHERITED: boolean
+): types.JSXAttribute => {
+    const {
+        block,
+        elem,
+        mods,
+        className
+    } = BEM_PROPS;
+    // const _BLOCK_ARRAY = filter(block, element);
+    // const _BLOCK = isBlockInherited || !_BLOCK_ARRAY ? null : reduceBlock(_BLOCK_ARRAY);
 
-    const { block } = BEM_PROPS;
-    const _BLOCK_ARRAY = filter(block, element);
-    const _BLOCK = isBlockInherited || !_BLOCK_ARRAY ? null : reduceBlock(_BLOCK_ARRAY);
+    const __BLOCK__: string = block!.value;
+    // const __elem__: string = `${__block__}${ELEM_CONNECTOR()}${elem!.value}`;
+    const __ELEM__ = elem
+        ? `${SPACE}${__BLOCK__}${ELEM_CONNECTOR()}${elem.value}`
+        : null;
+
+    let final = EMPTY_STRING;
+    final += __BLOCK__;
+    final += __ELEM__ || EMPTY_STRING;
+
+    return types.jsxAttribute(
+        types.jsxIdentifier('className'),
+        types.stringLiteral(final)
+    );
 
 
     // IMPLEMENTATION IDEA
+    // block: string
+    // elem: string
+    // mods: string | object | function (including identifiers)
+    // className: any, and if no block-elem-mods, don't process
     /*
         str __BLOCK__
         str __ELEM__
@@ -223,7 +248,7 @@ export default function constructClassNameAttribute(
 
     */
 
-    return _BLOCK;
+    // return _BLOCK;
 };
 
 // const block = blocks.reduce((previous: types, current: x, index): x => {
@@ -412,3 +437,5 @@ export default function constructClassNameAttribute(
 // }
 
 // return block;
+
+export default constructClassNameAttribute;

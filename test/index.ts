@@ -14,7 +14,13 @@ import {
 //     customconnectors: testCustomConnectors
 // };
 
-describe('Transpilation process happens without error', () => {
+const THROW = [
+    'elem',
+    'elem-mod',
+    'mods'
+];
+
+describe('Transpilation process happens as expected', () => {
     const testsDirectory = path.resolve(__dirname, 'tests');
     const attributesDirectory = path.resolve(testsDirectory, 'attributes');
     const featuresDirectory = path.resolve(testsDirectory, 'features');
@@ -43,8 +49,16 @@ function testAttribute(attributesDirectory: string, attributePath: string) {
         resolve(attributeDirectory, 'expected.jsx'),
         'utf-8'
     );
-    const { code: output } = transformSync(input, CONFIG)!;
 
+    if (THROW.includes(nameOfTest)) {
+        it(`Throws error: ${nameOfTest}`, () => {
+            expect(() => transformSync(input, CONFIG)).toThrowError();
+        });
+
+        return;
+    }
+
+    const { code: output } = transformSync(input, CONFIG)!;
     output && generateFile(attributeDirectory, 'out.jsx', output);
 
     it(`Output matches expected: ${nameOfTest}`, () => {

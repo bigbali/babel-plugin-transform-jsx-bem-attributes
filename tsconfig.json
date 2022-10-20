@@ -19,7 +19,6 @@
         "composite": false
     },
     "types": [
-        "react",
         "node"
     ],
     "include": [

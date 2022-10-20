@@ -31,7 +31,12 @@ const utils_js_1 = require("./utils.js");
 //     blockinheritance: testBlockInheritance,
 //     customconnectors: testCustomConnectors
 // };
-describe('Transpilation process happens without error', () => {
+const THROW = [
+    'elem',
+    'elem-mod',
+    'mods'
+];
+describe('Transpilation process happens as expected', () => {
     const testsDirectory = path_1.default.resolve(__dirname, 'tests');
     const attributesDirectory = path_1.default.resolve(testsDirectory, 'attributes');
     const featuresDirectory = path_1.default.resolve(testsDirectory, 'features');
@@ -49,6 +54,12 @@ function testAttribute(attributesDirectory, attributePath) {
     const { name: nameOfTest } = (0, path_1.parse)(attributePath);
     const input = (0, fs_1.readFileSync)((0, path_1.resolve)(attributeDirectory, 'in.jsx'), 'utf-8');
     const expected = (0, fs_1.readFileSync)((0, path_1.resolve)(attributeDirectory, 'expected.jsx'), 'utf-8');
+    if (THROW.includes(nameOfTest)) {
+        it(`Throws error: ${nameOfTest}`, () => {
+            expect(() => (0, core_1.transformSync)(input, utils_js_1.CONFIG)).toThrowError();
+        });
+        return;
+    }
     const { code: output } = (0, core_1.transformSync)(input, utils_js_1.CONFIG);
     output && (0, utils_js_1.generateFile)(attributeDirectory, 'out.jsx', output);
     it(`Output matches expected: ${nameOfTest}`, () => {
@@ -131,17 +142,3 @@ function testAttribute(attributesDirectory, attributePath) {
 //         });
 //     });
 // }
-// export const CONFIG = {
-//     plugins: [
-//         '@babel/plugin-syntax-jsx',
-//         require.resolve('../lib/index.js')
-//     ],
-//     ast: true
-// };
-// describe('Reworked plugin doesn\'t throw', () => {
-//     // const input = readFileSync(path.resolve(__dirname, 'testfile.jsx'));
-//     it('does something', () => {
-//         const output = transformFileSync(path.resolve(__dirname, 'testfile.jsx'));
-//         writeFileSync(path.resolve(__dirname, 'testfile_out.jsx'), output.code, CONFIG);
-//     })
-// });
