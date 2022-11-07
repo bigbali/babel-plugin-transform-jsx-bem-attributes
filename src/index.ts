@@ -208,8 +208,7 @@ const traverseJSXElementTree = (element: NodePath<types.JSXElement>, block: Bloc
 
     if (!BEM_PROPS.block) {
         BEM_PROPS.elem && throwError(element, 'An \'elem\' attribute is provided, but \'block\' missing.');
-        // eslint-disable-next-line @typescript-eslint/restrict-plus-operands, max-len
-        BEM_PROPS.mods && throwError(element, 'A \'mods\' attribute is provided, but \'block\' missing.' + JSON.stringify(BEM_PROPS.mods));
+        BEM_PROPS.mods && throwError(element, 'A \'mods\' attribute is provided, but \'block\' missing.');
 
         if (BEM_PROPS.className) {
             element.node.openingElement.attributes.push(
