@@ -8,6 +8,12 @@
     <div className="BLOCK-ELEM" />
 </div>;
 
+<div>
+    <div block='BLOCK'>
+        <div elem='ELEM' />
+    </div>
+</div>;
+
 <div className="BLOCK">
     <div className="BLOCK-ELEM BLOCK-ELEM_MODS" />
 </div>;

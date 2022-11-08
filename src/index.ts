@@ -237,7 +237,8 @@ const assignString = (
     isBlockInherited: { value: boolean }
 ) => {
     if (expression.value === EMPTY_STRING) {
-        throwError(attrPath, 'Empty string is not a valid value.');
+        // throwError(attrPath, 'Empty string is not a valid value.');
+        console.log('Something\'s wrong: found empty string at', attrPath.node.loc);
     }
     if (isBlock(attrName)) {
         BEM_PROPS.block = expression;

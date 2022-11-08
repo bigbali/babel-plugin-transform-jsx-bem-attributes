@@ -96,6 +96,10 @@ const constructClassNameAttribute = (
         final += MODS;
     }
 
+    // INVESTIGATE:
+    // when block and elem are both top level, block is omitted (which makes sense, methinks)
+    // so, let's think about whether or not we should keep this behaviour
+
 
     const attributeValue = (() => {
         if (typeof MODS !== 'string' && types.isTemplateLiteral(MODS)) {

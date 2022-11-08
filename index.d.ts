@@ -1,9 +1,20 @@
-// import 'react';
+import 'react';
+import 'react-router-dom';
 
-// declare module 'react' {
-//     interface HTMLAttributes<T> extends AriaAttributes, DOMAttributes<T> {
-//         block?: string | string[],
-//         elem?: string | string[],
-//         mods?: string | string[] | object
-//     }
-// }
+declare module 'react' {
+    interface HTMLAttributes<T> {
+        block?: string,
+        elem?: string,
+        mods?: string | object | unknown[]
+    }
+}
+
+declare global {
+    namespace JSX {
+        interface IntrinsicAttributes {
+            block?: string,
+            elem?: string,
+            mods?: string | object | unknown[]
+        }
+    }
+}

@@ -4,6 +4,12 @@
     <div elem="ELEM" />
 </div>;
 
+<div>
+    <div block='BLOCK'>
+        <div elem='ELEM' />
+    </div>
+</div>;
+
 <div block="BLOCK">
     <div elem="ELEM" mods="MODS" />
 </div>;
