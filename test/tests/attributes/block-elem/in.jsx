@@ -1,1 +1,11 @@
-const BLOCK_STRING__ELEM_STRING = <div block="BLOCK" elem="ELEM" />;
+<div block="BLOCK" elem="ELEM" />;
+
+<div block="BLOCK" >
+    <div elem="ELEM" />
+</div>;
+
+<div block="BLOCK" >
+    <div elem="ELEM">
+        <div elem="NESTEDELEM" />
+    </div>
+</div>;

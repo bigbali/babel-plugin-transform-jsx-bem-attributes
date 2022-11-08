@@ -175,14 +175,14 @@ const traverseJSXElementTree = (element: NodePath<types.JSXElement>, block: Bloc
         }
 
         if (types.isStringLiteral(attrValue)) {
-            assignString(BEM_PROPS, attrPath, attrName, attrValue);
+            assignString(BEM_PROPS, attrPath, attrName, attrValue, isBlockInherited);
         }
 
         if (types.isJSXExpressionContainer(attrValue)) {
             const { expression } = attrValue;
 
             if (types.isStringLiteral(expression) && expression.value) {
-                assignString(BEM_PROPS, attrPath, attrName, expression);
+                assignString(BEM_PROPS, attrPath, attrName, expression, isBlockInherited);
             }
 
             if ((types.isFunctionExpression(expression)
@@ -233,13 +233,15 @@ const assignString = (
     BEM_PROPS: BEMProps,
     attrPath: NodePath<types.JSXAttribute>,
     attrName: BEMPropTypes,
-    expression: types.StringLiteral
+    expression: types.StringLiteral,
+    isBlockInherited: { value: boolean }
 ) => {
     if (expression.value === EMPTY_STRING) {
         throwError(attrPath, 'Empty string is not a valid value.');
     }
     if (isBlock(attrName)) {
         BEM_PROPS.block = expression;
+        isBlockInherited.value = false;
         return;
     }
     if (isElem(attrName)) {
