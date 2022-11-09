@@ -1,5 +1,6 @@
 node_modules/
 lib/
 test/*.js
+test/tsconfig.tsbuildinfo
 coverage/
 .vscode

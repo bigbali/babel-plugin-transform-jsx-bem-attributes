@@ -9,7 +9,7 @@ export const SPACE = ' ';
 
 type BuiltModsType = types.TemplateLiteral | string | null;
 
-const buildMods = (block: string | null, elem: string | null, mods: Mods): BuiltModsType => {
+const buildMods = (block: string | null, elem: string | null, mods: Mods, element: NodePath<types.JSXElement>): BuiltModsType => {
     const prefix = (() => {
         if (block && elem) return elem;
         if (block && !elem) return block;
@@ -21,7 +21,7 @@ const buildMods = (block: string | null, elem: string | null, mods: Mods): Built
         return `${SPACE}${prefix}${MODS_CONNECTOR}${mods.value}`;
     }
 
-    const tl = types.templateLiteral([types.templateElement({ raw: prefix }, false)], []);
+    const template = types.templateLiteral([types.templateElement({ raw: prefix }, false)], []);
 
     if (types.isObjectExpression(mods)) {
         mods.properties.forEach((property) => {
@@ -44,20 +44,66 @@ const buildMods = (block: string | null, elem: string | null, mods: Mods): Built
                 if (types.isBooleanLiteral(property.value) && property.value.value === false) return;
                 if (types.isRestElement(property.value)) return;
 
-                tl.expressions.push(types.conditionalExpression(
+                template.expressions.push(types.conditionalExpression(
                     property.value as types.Expression,
                     types.stringLiteral(`${SPACE}${prefix}${MODS_CONNECTOR}${key}`),
                     types.stringLiteral(EMPTY_STRING)
                 ));
-                tl.quasis.push(types.templateElement({ raw: EMPTY_STRING }));
+                template.quasis.push(types.templateElement({ raw: EMPTY_STRING }));
             }
 
         });
     }
 
-    if (tl.expressions.length === 0) return null;
+    // leave call alone, but convert function expr to callexpr and give it prefix arg
 
-    return tl;
+    if (types.isCallExpression(mods)) {
+        template.expressions.push(mods);
+        template.quasis.push(types.templateElement({ raw: EMPTY_STRING }));
+    }
+
+    if (types.isFunctionExpression(mods) || types.isArrowFunctionExpression(mods)) {
+        template.expressions.push(
+            types.callExpression(mods, [
+                types.stringLiteral(`${SPACE}${prefix}${MODS_CONNECTOR}`)
+            ])
+        );
+        template.quasis.push(types.templateElement({ raw: EMPTY_STRING }));
+    }
+
+    if (types.isIdentifier(mods)) {
+        const binding = element.scope.getBinding(mods.name);
+
+        if (!binding) return null;
+
+        const node = binding.path.node;
+
+        // If 'mods' is a function declaration with var/let/const, call it with prefix argument
+        if (types.isVariableDeclarator(node)) {
+            if (types.isFunctionExpression(node.init) || types.isArrowFunctionExpression(node.init)) {
+                template.expressions.push(
+                    types.callExpression(mods, [
+                        types.stringLiteral(`${SPACE}${prefix}${MODS_CONNECTOR}`)
+                    ])
+                );
+                template.quasis.push(types.templateElement({ raw: EMPTY_STRING }));
+            }
+        }
+
+        // If 'mods' is a function declaration, call it with prefix argument
+        if (types.isFunctionDeclaration(node)) {
+            template.expressions.push(
+                types.callExpression(mods, [
+                    types.stringLiteral(`${SPACE}${prefix}${MODS_CONNECTOR}`)
+                ])
+            );
+            template.quasis.push(types.templateElement({ raw: EMPTY_STRING }));
+        }
+    }
+
+    if (template.expressions.length === 0) return null;
+
+    return template;
 };
 
 const constructClassNameAttribute = (
@@ -80,7 +126,7 @@ const constructClassNameAttribute = (
         ? `${BLOCK}${ELEM_CONNECTOR}${elem.value}`
         : null;
 
-    const MODS = buildMods(BLOCK, ELEM, mods);
+    const MODS = buildMods(BLOCK, ELEM, mods, ELEMENT);
 
     let final: string = EMPTY_STRING;
 
@@ -109,8 +155,6 @@ const constructClassNameAttribute = (
         }
         if (typeof final === 'string') return types.stringLiteral(final);
     })();
-
-    // console.log(attributeValue);
 
     if (!attributeValue) return null;
 

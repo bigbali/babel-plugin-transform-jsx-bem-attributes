@@ -185,18 +185,21 @@ const traverseJSXElementTree = (element: NodePath<types.JSXElement>, block: Bloc
                 assignString(BEM_PROPS, attrPath, attrName, expression, isBlockInherited);
             }
 
-            if ((types.isFunctionExpression(expression)
+            if (isMods(attrName) && (
+                types.isFunctionExpression(expression)
+                || types.isArrowFunctionExpression(expression)
                 || types.isCallExpression(expression)
                 || types.isObjectExpression(expression)
                 || types.isTemplateLiteral(expression)
-                || types.isIdentifier(expression))
-                && isMods(attrName)) {
+                || types.isIdentifier(expression)
+            )) {
                 assertMods(attrPath);
 
                 BEM_PROPS.mods = expression;
             }
 
             if (isClassName(attrName) && !types.isJSXEmptyExpression(expression)) { // className allows any value
+                assertClassName(attrPath);
                 BEM_PROPS.className = attrValue;
             }
         }
@@ -209,18 +212,23 @@ const traverseJSXElementTree = (element: NodePath<types.JSXElement>, block: Bloc
     if (!BEM_PROPS.block) {
         BEM_PROPS.elem && throwError(element, 'An \'elem\' attribute is provided, but \'block\' missing.');
         BEM_PROPS.mods && throwError(element, 'A \'mods\' attribute is provided, but \'block\' missing.');
-
-        if (BEM_PROPS.className) {
-            element.node.openingElement.attributes.push(
-                types.jsxAttribute(types.jsxIdentifier('className'), BEM_PROPS.className)
-            );
-        }
-
-        return;
     }
 
-    const classNameAttribute = constructClassNameAttribute(BEM_PROPS, element, isBlockInherited.value);
-    classNameAttribute && element.node.openingElement.attributes.push(classNameAttribute);
+    classNameCheck: if (isClassNameOnly) {
+        // INVESTIGATE:
+        // without this label-break thing, we can find that SVG paths have 'className=true' on them (wtf?)
+        // additionally, without this, top level element in JSX expressions {true && [<div>]<span />[</div>]}
+        // doesn't have block, but it's children apparently receive it properly
+        if (!BEM_PROPS.className) break classNameCheck;
+
+        element.node.openingElement.attributes.push(
+            types.jsxAttribute(types.jsxIdentifier('className'), BEM_PROPS.className)
+        );
+    }
+    else {
+        const classNameAttribute = constructClassNameAttribute(BEM_PROPS, element, isBlockInherited.value);
+        classNameAttribute?.value && element.node.openingElement.attributes.push(classNameAttribute);
+    }
 
     element.get('children').forEach(childElement => { // Here happens the recursive traversal
         if (types.isJSXElement(childElement.node)) {
@@ -237,8 +245,11 @@ const assignString = (
     isBlockInherited: { value: boolean }
 ) => {
     if (expression.value === EMPTY_STRING) {
-        // throwError(attrPath, 'Empty string is not a valid value.');
-        console.log('Something\'s wrong: found empty string at', attrPath.node.loc);
+        const { start } = attrPath.node.loc || {};
+        error(
+            attrPath,
+            `Empty string is not a valid value at ${attrName}, line ${start?.line || 'unknown'}, column ${start?.column || 'unknown'}.`
+        );
     }
     if (isBlock(attrName)) {
         BEM_PROPS.block = expression;
@@ -293,6 +304,7 @@ const assertMods = (attrPath: NodePath<types.JSXAttribute>) => {
 
     if (!OPTIONS.mod.function
         && types.isFunctionExpression(attrPath.node)
+        || types.isArrowFunctionExpression(attrPath.node)
         || types.isCallExpression(attrPath.node)) {
         error(attrPath, errorMessage(BEMPropTypes.MODS, 'function'));
         return;

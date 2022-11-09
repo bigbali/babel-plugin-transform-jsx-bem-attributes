@@ -1,20 +1,9 @@
 import 'react';
-import 'react-router-dom';
 
 declare module 'react' {
-    interface HTMLAttributes<T> {
+    interface HTMLAttributes<T> extends JSX.IntrinsicAttributes {
         block?: string,
         elem?: string,
-        mods?: string | object | unknown[]
-    }
-}
-
-declare global {
-    namespace JSX {
-        interface IntrinsicAttributes {
-            block?: string,
-            elem?: string,
-            mods?: string | object | unknown[]
-        }
+        mods?: string | Record<string, any> | ((prefix: string) => string)
     }
 }

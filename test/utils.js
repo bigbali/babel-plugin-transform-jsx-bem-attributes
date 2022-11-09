@@ -5,9 +5,6 @@ const core_1 = require("@babel/core");
 const fs_1 = require("fs");
 const path_1 = require("path");
 exports.CONFIG = {
-    presets: [
-    // '@babel/preset-react'
-    ],
     plugins: [
         '@babel/plugin-syntax-jsx',
         require.resolve('../lib/index.js')
@@ -17,7 +14,7 @@ exports.CONFIG = {
     generatorOpts: {
         retainFunctionParens: true,
         retainLines: true,
-        compact: false
+        compact: false,
     }
 };
 const THIS_FILE_IS_GENERATED_AUTOMATICALLY = `\

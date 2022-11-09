@@ -33,7 +33,7 @@ const utils_js_1 = require("./utils.js");
 // };
 const THROW = [
     'elem',
-    'elem-mod',
+    'elem-mods',
     'mods'
 ];
 describe('Transpilation process happens as expected', () => {
@@ -53,13 +53,13 @@ function testAttribute(attributesDirectory, attributePath) {
     const attributeDirectory = (0, path_1.resolve)(attributesDirectory, attributePath);
     const { name: nameOfTest } = (0, path_1.parse)(attributePath);
     const input = (0, fs_1.readFileSync)((0, path_1.resolve)(attributeDirectory, 'in.jsx'), 'utf-8');
-    const expected = (0, fs_1.readFileSync)((0, path_1.resolve)(attributeDirectory, 'expected.jsx'), 'utf-8');
     if (THROW.includes(nameOfTest)) {
         it(`Throws error: ${nameOfTest}`, () => {
             expect(() => (0, core_1.transformSync)(input, utils_js_1.CONFIG)).toThrowError();
         });
         return;
     }
+    const expected = (0, fs_1.readFileSync)((0, path_1.resolve)(attributeDirectory, 'expected.jsx'), 'utf-8');
     const { code: output } = (0, core_1.transformSync)(input, utils_js_1.CONFIG);
     output && (0, utils_js_1.generateFile)(attributeDirectory, 'out.jsx', output);
     it(`Output matches expected: ${nameOfTest}`, () => {

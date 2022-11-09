@@ -3,9 +3,6 @@ import { readFileSync, writeFile } from 'fs';
 import { resolve } from 'path';
 
 export const CONFIG: TransformOptions = {
-    presets: [
-        // '@babel/preset-react'
-    ],
     plugins: [
         '@babel/plugin-syntax-jsx',
         require.resolve('../lib/index.js')
@@ -15,7 +12,7 @@ export const CONFIG: TransformOptions = {
     generatorOpts: {
         retainFunctionParens: true,
         retainLines: true,
-        compact: false
+        compact: false,
     }
 };
 

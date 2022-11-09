@@ -2,6 +2,7 @@ import { types } from '@babel/core';
 
 export type ModsType = types.ObjectExpression
     | types.FunctionExpression
+    | types.ArrowFunctionExpression
     | types.CallExpression
     | types.StringLiteral
     | types.TemplateLiteral
@@ -31,12 +32,6 @@ export enum BEMPropTypes {
     MODS = 'mods',
     CLASSNAME = 'className'
 };
-
-// export const isObjectPropertyArray = (
-//     properties: (ObjectMethod | ObjectProperty | SpreadElement)[]
-// ): properties is ObjectProperty[] => {
-//     return properties.every(property => isObjectProperty(property));
-// };
 
 export const isArray = Array.isArray;
 

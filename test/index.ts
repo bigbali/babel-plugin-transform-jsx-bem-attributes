@@ -16,7 +16,7 @@ import {
 
 const THROW = [
     'elem',
-    'elem-mod',
+    'elem-mods',
     'mods'
 ];
 
@@ -45,10 +45,6 @@ function testAttribute(attributesDirectory: string, attributePath: string) {
         resolve(attributeDirectory, 'in.jsx'),
         'utf-8'
     );
-    const expected = readFileSync(
-        resolve(attributeDirectory, 'expected.jsx'),
-        'utf-8'
-    );
 
     if (THROW.includes(nameOfTest)) {
         it(`Throws error: ${nameOfTest}`, () => {
@@ -58,6 +54,10 @@ function testAttribute(attributesDirectory: string, attributePath: string) {
         return;
     }
 
+    const expected = readFileSync(
+        resolve(attributeDirectory, 'expected.jsx'),
+        'utf-8'
+    );
     const { code: output } = transformSync(input, CONFIG)!;
     output && generateFile(attributeDirectory, 'out.jsx', output);
 
