@@ -2,17 +2,17 @@
 ## TypeScript support
 If you will be using this plugin with TypeScript, you'll need a `<name>.d.ts` file, in which you will have declared at the top of the file:
 ```typescript
-    /// <reference types="babel-plugin-transform-jsx-bem-attributes" />
+/// <reference types="babel-plugin-transform-jsx-bem-attributes" />
 ```
 
 The file name does not matter, as long as the compiler knows about it.
 If it does not, try this in your `tsconfig.json`:
 
 ```json
-    "include": [
-        ...,
-        "<name>.d.ts"
-    ]
+"include": [
+    ...,
+    "<name>.d.ts"
+]
 ```
 
 Without this, you'll need to add the types manually, or TypeScript will complain!
