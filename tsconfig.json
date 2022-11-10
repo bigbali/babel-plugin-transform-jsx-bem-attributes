@@ -10,7 +10,6 @@
         "forceConsistentCasingInFileNames": true,
         "strict": true,
         "esModuleInterop": true,
-        "declaration": true,
         "baseUrl": ".",
         "allowJs": true,
         "checkJs": true,

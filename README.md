@@ -1,5 +1,4 @@
 # A plugin for Babel that allows converting 'block', 'elem' and 'mods' props into proper 'className'
-
 ## TypeScript support
 If you will be using this plugin with TypeScript, you'll need a `<name>.d.ts` file, in which you will have declared at the top of the file:
     
@@ -18,22 +17,22 @@ Without this, you'll need to add the types manually, or TypeScript will complain
 It converts 'block', 'elem' and 'mods' attributes into 'className', which allows for dynamic classes using template literals and conditional expressions. If the values provided are static, it will simply output strings.
 
 ## How to use:
-`type T = string | template literal | object expression | function call expression | (if enabled) a variable identifier`
-- `block: T | T[]` → this will be the base used to construct the class
-- `elem:  T | T[]` → appended to block; requires `block` to be defined
-- `mods:  T | T[]` → if `elem` is defined, it will be appended to that, otherwise to `block`
-- `className: T | T[]` → will be appended to the end of the constructed class; will be processed regardless of the other
-attributes being defined, which changes the default behaviour
+- `block: string` → this will be the base used to construct the class
+- `elem:  string` → appended to block; requires `block` to be defined
+- `mods:  string | (prefix: string) => string | object` → if `elem` is defined, it will be appended to that, otherwise to `block`
+- `className` → will be appended to the end of the constructed class
 ## Configuration:
 
-You can provide these environment variables (case insensitive):
-- `allowStringLiteral` → set this to `false` if you wish to disallow use of `strings` as values
-- `allowTemplateLiteral` → set this to `false` if you wish to disallow use of `template literals` as values
-- `allowArrayExpression` → set this to `false` if you wish to disallow use of `array elements` as values
-- `allowObjectExpression` → set this to `false` if you wish to disallow use of `objects` as values
-- `allowIdentifier` → set this to `true` if you wish to use variables as values
-- `allowFalsyValue` → set this to `true` if you wish to use empty string or empty arrays as values
-- `arrayMaxLength` → set this to any number you wish. This controls the maximal length of the array provided as value to an attribute. The default is `3`.
+You can set these options:
+
+    plugin: {
+        enable: boolean, default: true → enable the plugin
+        error: "throw" | "warn", default: "throw" → throw errors, instead of printing in the console
+    }
+
+    block: {
+        preserve: boolean, default: true → when we have top level 'block' and 'elem', keep 'block' (otherwise keep 'elem' only)
+    }
 
 You can set these in your `.babelrc`, like this:
 
@@ -42,22 +41,53 @@ You can set these in your `.babelrc`, like this:
             [
                 "transform-jsx-bem-attributes",
                 {
-                    "allowStringLiteral": false,
-                    "allowIdentifier": true
+                    "plugin": {
+                        "enable": false
+                    }
                 }
             ]
         ]
     }
 
 ## What sense could this possibly make?
-
-Sometimes, you just need to build complex classes. This plugin aims to ease that. \
-The main vision is using it with the BEM methodology.
+It helps me write my classes. Maybe it will help you as well :)
 
 Example JSX: \ `todo`
-### Note:
 
-While it is absolutely possible to construct totally, obnoxiously complicated classes using arrays, I strongly discourage doing so. It will increase complexity drastically, at the detriment of file size and performance.
-#### If you notice any errors or have any suggestions, feel free to reach out.
+    IN: <div block="BLOCK" elem="ELEM" mods="MODS" className="CLASSNAME" />;
+    OUT: <div className="BLOCK BLOCK-ELEM BLOCK-ELEM_MODS CLASSNAME" />;
+
+    IN:
+    <div block="BLOCK" mods="MODS" className="CLASSNAME">
+        <div elem="ELEM" />
+    </div>;
+
+    OUT:
+    <div className="BLOCK BLOCK_MODS CLASSNAME">
+        <div className="BLOCK-ELEM" />
+    </div>;
+
+    IN:
+    <div block="BLOCK" mods={{ MOD1: true, MOD2: false, MOD3: typeof getMod === "function", MOD4: getMod() }} className="CLASSNAME">
+        <div elem="ELEM" />
+    </div>;
+
+    OUT:
+    <div className={`BLOCK${true ? " BLOCK_MOD1" : ""}${typeof getMod === "function" ? " BLOCK_MOD3" : ""}${getMod() ? " BLOCK_MOD4" : ""} CLASSNAME`}>
+        <div className="BLOCK-ELEM" />
+    </div>;
+
+    IN:
+    <div block="BLOCK" mods={getMod}>
+        <div elem="ELEM" />
+    </div>;
+
+    OUT:
+    <div className={`BLOCK${getMod(" BLOCK_")} CLASSNAME`}>
+        <div className="BLOCK-ELEM" />
+    </div>;
+
+### Note:
+#### If you notice any errors or have any suggestions, please reach out.
 
 

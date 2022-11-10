@@ -22,10 +22,6 @@ const isBlock = (attrName: string): attrName is BEMPropTypes.BLOCK => {
     return attrName === BEMPropTypes.BLOCK;
 };
 
-const isElem = (attrName: string): attrName is BEMPropTypes.ELEM => {
-    return attrName === BEMPropTypes.ELEM;
-};
-
 const isMods = (attrName: string): attrName is BEMPropTypes.MODS => {
     return attrName === BEMPropTypes.MODS;
 };
@@ -57,14 +53,6 @@ type Options = {
     },
     block: {
         preserve: boolean
-    },
-    mods: {
-        allow: boolean,
-        function: boolean,
-        object: boolean
-    },
-    className: {
-        allow: boolean
     }
 };
 
@@ -75,14 +63,6 @@ const DEFAULT_OPTIONS: Options = {
     },
     block: {
         preserve: true
-    },
-    mods: {
-        allow: true,
-        function: true,
-        object: true
-    },
-    className: {
-        allow: true
     }
 };
 
@@ -90,8 +70,6 @@ export const OPTIONS = DEFAULT_OPTIONS;
 
 const hasPlugin = (opts: object): opts is { plugin: Options['plugin'] } => 'plugin' in opts;
 const hasBlock = (opts: object): opts is { block: Options['block'] } => 'block' in opts;
-const hasMods = (opts: object): opts is { mods: Options['mods'] } => 'mods' in opts;
-const hasClassName = (opts: object): opts is { className: Options['className'] } => 'className' in opts;
 
 export default function transformJSXBEMAttributes(): Plugin {
     return {
@@ -107,18 +85,6 @@ export default function transformJSXBEMAttributes(): Plugin {
                 OPTIONS.block = {
                     ...OPTIONS.block,
                     ...this.opts.block
-                };
-            }
-            if (hasMods(this.opts)) {
-                OPTIONS.mods = {
-                    ...OPTIONS.mods,
-                    ...this.opts.mods
-                };
-            }
-            if (hasClassName(this.opts)) {
-                OPTIONS.className = {
-                    ...OPTIONS.className,
-                    ...this.opts.className
                 };
             }
         },
@@ -196,13 +162,10 @@ const traverseJSXElementTree = (element: NodePath<types.JSXElement>, block: Bloc
                 || types.isTemplateLiteral(expression)
                 || types.isIdentifier(expression)
             )) {
-                assertMods(attrPath);
-
                 BEM_PROPS.mods = expression;
             }
 
             if (isClassName(attrName) && !types.isJSXEmptyExpression(expression)) { // className allows any value
-                assertClassName(attrPath);
                 BEM_PROPS.className = attrValue;
             }
         }
@@ -259,22 +222,8 @@ const assignString = (
         isBlockInherited.value = false;
         return;
     }
-    if (isElem(attrName)) {
-        BEM_PROPS.elem = expression;
-        return;
-    }
-    if (isMods(attrName)) {
-        assertMods(attrPath);
 
-        BEM_PROPS.mods = expression;
-        return;
-    }
-    if (isClassName(attrName)) {
-        assertClassName(attrPath);
-
-        BEM_PROPS.className = expression;
-        return;
-    }
+    BEM_PROPS[attrName] = expression;
 };
 
 export const errorMessage = (attr: BEMPropTypes, type: string, detailedType?: string) => {
@@ -284,38 +233,6 @@ export const errorMessage = (attr: BEMPropTypes, type: string, detailedType?: st
         `${aOrAn}${detailedType || type} value was passed in for the '${attr}' attribute,
         but it is explicitly disabled. See '<PLUGIN OPTIONS>.${attr === 'mods' ? 'mod' : attr}.${type}'.`
     );
-};
-
-const assertMods = (attrPath: NodePath<types.JSXAttribute>) => {
-    if (!OPTIONS.mods.allow) {
-        error(attrPath,
-            `'Mods' is disallowed.
-            See '<PLUGIN OPTIONS>.mod.allow'.`
-        );
-        return;
-    }
-
-    if (!OPTIONS.mods.function
-        && types.isFunctionExpression(attrPath.node)
-        || types.isArrowFunctionExpression(attrPath.node)
-        || types.isCallExpression(attrPath.node)) {
-        error(attrPath, errorMessage(BEMPropTypes.MODS, 'function'));
-        return;
-    }
-
-    if (!OPTIONS.mods.object && types.isObjectExpression(attrPath.node)) {
-        error(attrPath, errorMessage(BEMPropTypes.MODS, 'object'));
-        return;
-    }
-};
-
-const assertClassName = (attrPath: NodePath<types.JSXAttribute>) => {
-    if (!OPTIONS.className.allow) {
-        error(attrPath,
-            `'className' is disallowed.
-            See '<PLUGIN OPTIONS>.className.allow'.`
-        );
-    }
 };
 
 /**
