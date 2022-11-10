@@ -1,4 +1,5 @@
 import { NodePath, types } from '@babel/core';
+import { OPTIONS } from './index';
 import { ELEM_CONNECTOR, MODS_CONNECTOR } from './constants';
 import {
     BEMProps, Mods,
@@ -9,19 +10,28 @@ export const SPACE = ' ';
 
 type BuiltModsType = types.TemplateLiteral | string | null;
 
-const buildMods = (block: string | null, elem: string | null, mods: Mods, element: NodePath<types.JSXElement>): BuiltModsType => {
+const buildValue = (
+    block: string | null,
+    elem: string | null,
+    mods: Mods,
+    element: NodePath<types.JSXElement>,
+    isBlockInherited: boolean
+): BuiltModsType => {
+
     const prefix = (() => {
         if (block && elem) return elem;
         if (block && !elem) return block;
     })();
 
-    if (!prefix) return null;
+    if (!prefix || !block) return null;
 
     if (types.isStringLiteral(mods) && mods.value) {
         return `${SPACE}${prefix}${MODS_CONNECTOR}${mods.value}`;
     }
 
-    const template = types.templateLiteral([types.templateElement({ raw: prefix }, false)], []);
+    // if in options we have opted to keep block when it's top level and has elem, add it
+    const templatePrefix = !isBlockInherited && elem && OPTIONS.block.preserve ? `${block}${SPACE}${prefix}` : prefix;
+    const template = types.templateLiteral([types.templateElement({ raw: templatePrefix }, false)], []);
 
     if (types.isObjectExpression(mods)) {
         mods.properties.forEach((property) => {
@@ -54,8 +64,6 @@ const buildMods = (block: string | null, elem: string | null, mods: Mods, elemen
 
         });
     }
-
-    // leave call alone, but convert function expr to callexpr and give it prefix arg
 
     if (types.isCallExpression(mods)) {
         template.expressions.push(mods);
@@ -126,13 +134,18 @@ const constructClassNameAttribute = (
         ? `${BLOCK}${ELEM_CONNECTOR}${elem.value}`
         : null;
 
-    const MODS = buildMods(BLOCK, ELEM, mods, ELEMENT);
+    const MODS = buildValue(BLOCK, ELEM, mods, ELEMENT, IS_BLOCK_INHERITED);
 
     let final: string = EMPTY_STRING;
 
     if (!IS_BLOCK_INHERITED) {
-        BLOCK && (final += BLOCK);
-        ELEM && (final += `${SPACE}${ELEM}`);
+        // if we have both block and elem, refer to options to decide whether or not to keep block
+        if ((BLOCK && ELEM && OPTIONS.block.preserve)
+            || (BLOCK && !ELEM)) { // if we only have block, we keep it anyway
+            final += BLOCK;
+        }
+        // when there is no block, we don't need space before elem
+        ELEM && (final += `${OPTIONS.block.preserve ? SPACE : EMPTY_STRING}${ELEM}`);
     }
     else {
         ELEM && (final += ELEM);
@@ -142,18 +155,44 @@ const constructClassNameAttribute = (
         final += MODS;
     }
 
-    // INVESTIGATE:
-    // when block and elem are both top level, block is omitted (which makes sense, methinks)
-    // so, let's think about whether or not we should keep this behaviour
-
-
     const attributeValue = (() => {
         if (typeof MODS !== 'string' && types.isTemplateLiteral(MODS)) {
+            if (className) {
+                if (types.isStringLiteral(className)) {
+                    MODS.quasis[MODS.quasis.length - 1] = types.templateElement({ raw: `${SPACE}${className.value}` }, true);
+                }
+                else {
+                    MODS.expressions.push(className?.expression as types.Expression);
+                    MODS.quasis.push(types.templateElement({ raw: EMPTY_STRING }, true));
+                }
+            }
+
             return types.jsxExpressionContainer(
                 MODS
             );
         }
-        if (typeof final === 'string') return types.stringLiteral(final);
+        if (typeof final === 'string') {
+            if (className) {
+                if (types.isStringLiteral(className)) {
+                    final += `${SPACE}${className.value}`;
+                }
+                else {
+                    return types.jsxExpressionContainer(
+                        types.templateLiteral(
+                            [
+                                types.templateElement({ raw: EMPTY_STRING }, false),
+                                types.templateElement({ raw: EMPTY_STRING }, true),
+                            ],
+                            [
+                                // when we added className, we made sure it's not an empty expression
+                                className.expression as types.Expression
+                            ]
+                        )
+                    );
+                }
+            }
+            return types.stringLiteral(final);
+        }
     })();
 
     if (!attributeValue) return null;

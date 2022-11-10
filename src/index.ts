@@ -12,7 +12,7 @@ import {
 import {
     BEM_PROP_TYPES
 } from './constants';
-import removeAttrPaths from './removeAttrPaths';
+import { removeAttrPaths } from './util';
 import constructClassNameAttribute, { EMPTY_STRING } from './construct';
 
 const SKIP_FILE = '@bem-skip-file';
@@ -55,15 +55,13 @@ type Options = {
         enable: boolean,
         error: 'throw' | 'warn'
     },
-    mod: {
+    block: {
+        preserve: boolean
+    },
+    mods: {
         allow: boolean,
-        string: boolean,
-        template: boolean,
         function: boolean,
-        object: boolean,
-        identifier: boolean,
-        array: boolean,
-        arrayMaxLength: ModsArrayAbsoluteMaxLength
+        object: boolean
     },
     className: {
         allow: boolean
@@ -75,25 +73,24 @@ const DEFAULT_OPTIONS: Options = {
         enable: true,
         error: 'throw'
     },
-    mod: {
+    block: {
+        preserve: true
+    },
+    mods: {
         allow: true,
-        string: true,
-        template: true,
         function: true,
-        object: true,
-        identifier: true,
-        array: true,
-        arrayMaxLength: 2
+        object: true
     },
     className: {
         allow: true
     }
 };
 
-const OPTIONS = DEFAULT_OPTIONS;
+export const OPTIONS = DEFAULT_OPTIONS;
 
 const hasPlugin = (opts: object): opts is { plugin: Options['plugin'] } => 'plugin' in opts;
-const hasMod = (opts: object): opts is { mod: Options['mod'] } => 'mod' in opts;
+const hasBlock = (opts: object): opts is { block: Options['block'] } => 'block' in opts;
+const hasMods = (opts: object): opts is { mods: Options['mods'] } => 'mods' in opts;
 const hasClassName = (opts: object): opts is { className: Options['className'] } => 'className' in opts;
 
 export default function transformJSXBEMAttributes(): Plugin {
@@ -106,10 +103,16 @@ export default function transformJSXBEMAttributes(): Plugin {
                     ...this.opts.plugin
                 };
             }
-            if (hasMod(this.opts)) {
-                OPTIONS.mod = {
-                    ...OPTIONS.mod,
-                    ...this.opts.mod
+            if (hasBlock(this.opts)) {
+                OPTIONS.block = {
+                    ...OPTIONS.block,
+                    ...this.opts.block
+                };
+            }
+            if (hasMods(this.opts)) {
+                OPTIONS.mods = {
+                    ...OPTIONS.mods,
+                    ...this.opts.mods
                 };
             }
             if (hasClassName(this.opts)) {
@@ -274,7 +277,7 @@ const assignString = (
     }
 };
 
-const errorMessage = (attr: BEMPropTypes, type: string, detailedType?: string) => {
+export const errorMessage = (attr: BEMPropTypes, type: string, detailedType?: string) => {
     const aOrAn = (detailedType || type).at(0)?.match(/[aeiou]/) ? 'an' : 'a';
 
     return (
@@ -284,7 +287,7 @@ const errorMessage = (attr: BEMPropTypes, type: string, detailedType?: string) =
 };
 
 const assertMods = (attrPath: NodePath<types.JSXAttribute>) => {
-    if (!OPTIONS.mod.allow) {
+    if (!OPTIONS.mods.allow) {
         error(attrPath,
             `'Mods' is disallowed.
             See '<PLUGIN OPTIONS>.mod.allow'.`
@@ -292,17 +295,7 @@ const assertMods = (attrPath: NodePath<types.JSXAttribute>) => {
         return;
     }
 
-    if (!OPTIONS.mod.string && types.isStringLiteral(attrPath.node)) {
-        error(attrPath, errorMessage(BEMPropTypes.MODS, 'string', 'string literal'));
-        return;
-    }
-
-    if (!OPTIONS.mod.template && types.isTemplateLiteral(attrPath.node)) {
-        error(attrPath, errorMessage(BEMPropTypes.MODS, 'template'));
-        return;
-    }
-
-    if (!OPTIONS.mod.function
+    if (!OPTIONS.mods.function
         && types.isFunctionExpression(attrPath.node)
         || types.isArrowFunctionExpression(attrPath.node)
         || types.isCallExpression(attrPath.node)) {
@@ -310,13 +303,8 @@ const assertMods = (attrPath: NodePath<types.JSXAttribute>) => {
         return;
     }
 
-    if (!OPTIONS.mod.object && types.isObjectExpression(attrPath.node)) {
+    if (!OPTIONS.mods.object && types.isObjectExpression(attrPath.node)) {
         error(attrPath, errorMessage(BEMPropTypes.MODS, 'object'));
-        return;
-    }
-
-    if (!OPTIONS.mod.identifier && types.isIdentifier(attrPath.node)) {
-        error(attrPath, errorMessage(BEMPropTypes.MODS, 'identifier', 'variable identifier'));
         return;
     }
 };
@@ -333,7 +321,7 @@ const assertClassName = (attrPath: NodePath<types.JSXAttribute>) => {
 /**
  * If error mode is 'throw', throw an error when one is found, otherwise warn in the console.
  */
-const error = (attrPath: NodePath<types.JSXAttribute>, message: string) => {
+export const error = (attrPath: NodePath<types.JSXAttribute>, message: string) => {
     if (OPTIONS.plugin.error === 'throw') {
         throwError(attrPath, message);
         return;

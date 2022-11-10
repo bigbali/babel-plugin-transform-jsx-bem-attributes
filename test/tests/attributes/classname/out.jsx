@@ -2,6 +2,6 @@
     This file is generated automatically.
 */
 
-const CLASSNAME_STRING = <div className="CLASSNAME" />;
-const CLASSNAME_OBJECT = <div className={{ property: propertyValue }} />;
-const CLASSNAME_FUNCTION = <div className={() => 'FUNCTION'} />;
+<div className="CLASSNAME" />;
+<div className={{ property: propertyValue }} />;
+<div className={() => 'FUNCTION'} />;
