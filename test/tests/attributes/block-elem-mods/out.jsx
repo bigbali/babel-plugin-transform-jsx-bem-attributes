@@ -14,46 +14,46 @@
 
 const getMod = () => true;
 function getMod2() {return true;};
-<div className={`BLOCK${true ? " BLOCK_MOD1" : ""}${typeof getMod === "function" ? " BLOCK_MOD3" : ""}${getMod() ? " BLOCK_MOD4" : ""}`}>
+<div className={`TEMPLATE_PREFIX${true ? " BLOCK_MOD1" : ""}QUASI${typeof getMod === "function" ? " BLOCK_MOD3" : ""}QUASI${getMod() ? " BLOCK_MOD4" : ""}QUASI`}>
     <div className="BLOCK-ELEM" />
 </div>;
 
 <div className="BLOCK">
-    <div className={`BLOCK-ELEM${true ? " BLOCK-ELEM_MOD1" : ""}${typeof getMod === "function" ? " BLOCK-ELEM_MOD3" : ""}${getMod() ? " BLOCK-ELEM_MOD4" : ""}`} />
+    <div className={`TEMPLATE_PREFIX${true ? " BLOCK-ELEM_MOD1" : ""}QUASI${typeof getMod === "function" ? " BLOCK-ELEM_MOD3" : ""}QUASI${getMod() ? " BLOCK-ELEM_MOD4" : ""}QUASI`} />
 </div>;
 
-<div className={`BLOCK${getMod()}`}>
+<div className={`TEMPLATE_PREFIX${getMod()}`}>
     <div className="BLOCK-ELEM" />
 </div>;
 
 <div className="BLOCK">
-    <div className={`BLOCK-ELEM${getMod()}`} />
+    <div className={`TEMPLATE_PREFIX${getMod()}`} />
 </div>;
 
-<div className={`BLOCK${getMod(" BLOCK_")}`}>
+<div className={`TEMPLATE_PREFIX${getMod(" BLOCK_")}`}>
     <div className="BLOCK-ELEM" />
 </div>;
 
 <div className="BLOCK">
-    <div className={`BLOCK-ELEM${getMod(" BLOCK-ELEM_")}`} />
+    <div className={`TEMPLATE_PREFIX${getMod(" BLOCK-ELEM_")}`} />
 </div>;
 
 <div className="BLOCK">
-    <div className={`BLOCK-ELEM${getMod2(" BLOCK-ELEM_")}`} />
+    <div className={`TEMPLATE_PREFIX${getMod2(" BLOCK-ELEM_")}`} />
 </div>;
 
-<div className={`BLOCK${(() => {})(" BLOCK_")}`}>
+<div className={`TEMPLATE_PREFIX${(() => {})(" BLOCK_")}`}>
     <div className="BLOCK-ELEM" />
 </div>;
 
 <div className="BLOCK">
-    <div className={`BLOCK-ELEM${(() => {})(" BLOCK-ELEM_")}`} />
+    <div className={`TEMPLATE_PREFIX${(() => {})(" BLOCK-ELEM_")}`} />
 </div>;
 
-<div className={`BLOCK${((prefix) => prefix + ':)')(" BLOCK_")}`}>
+<div className={`TEMPLATE_PREFIX${((prefix) => prefix + ':)')(" BLOCK_")}`}>
     <div className="BLOCK-ELEM" />
 </div>;
 
 <div className="BLOCK">
-    <div className={`BLOCK-ELEM${((prefix) => prefix + ':)')(" BLOCK-ELEM_")}`} />
+    <div className={`TEMPLATE_PREFIX${((prefix) => prefix + ':)')(" BLOCK-ELEM_")}`} />
 </div>;
