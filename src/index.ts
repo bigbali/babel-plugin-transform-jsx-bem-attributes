@@ -184,7 +184,7 @@ const traverseJSXElementTree = (element: NodePath<types.JSXElement>, block: Bloc
         // INVESTIGATE:
         // without this label-break thing, we can find that SVG paths have 'className=true' on them (wtf?)
         // additionally, without this, top level element in JSX expressions {true && [<div>]<span />[</div>]}
-        // doesn't have block, but it's children apparently receive it properly
+        // don't have block, but it's children apparently receive it properly
         if (!BEM_PROPS.className) break classNameCheck;
 
         element.node.openingElement.attributes.push(

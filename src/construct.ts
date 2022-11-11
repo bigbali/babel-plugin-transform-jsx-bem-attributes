@@ -31,14 +31,14 @@ const buildValue = (
 
     // if in options we have opted to keep block when it's top level and has elem, add it
     const templatePrefix = (!isBlockInherited && elem && OPTIONS.block.preserve)
-        ? `${block}${SPACE}${prefix}`
-        : prefix;
+        ? `BLOCK${SPACE}'TEMPLATE_PREFIX'`
+        : 'TEMPLATE_PREFIX';
     const template = types.templateLiteral([
-        types.templateElement({ raw: templatePrefix || 'IF_YOU_SEE_THIS_THERE_IS_A_BIG_ERROR' }, false)
+        types.templateElement({ raw: templatePrefix }, false)
     ], []);
 
     if (types.isObjectExpression(mods)) {
-        mods.properties.forEach((property) => {
+        mods.properties.forEach((property, index) => {
             if (types.isSpreadElement(property)) return;
 
             if (types.isObjectProperty(property)) {
@@ -60,10 +60,10 @@ const buildValue = (
 
                 template.expressions.push(types.conditionalExpression(
                     property.value as types.Expression,
-                    types.stringLiteral(`${SPACE}${prefix}${MODS_CONNECTOR}${key}`),
-                    types.stringLiteral(EMPTY_STRING)
+                    types.stringLiteral(`${SPACE}${prefix + '!!!'}${MODS_CONNECTOR}${key}`),
+                    types.stringLiteral('???')
                 ));
-                template.quasis.push(types.templateElement({ raw: EMPTY_STRING }));
+                template.quasis.push(types.templateElement({ raw: 'QUASI' }, index === Object.keys(mods.properties).length));
             }
         });
     }
@@ -131,9 +131,9 @@ const constructClassNameAttribute = (
         className
     } = BEM_PROPS;
 
-    if (!block) return null;
+    if (!block || !block.value) return null;
 
-    const BLOCK = block.value || null;
+    const BLOCK = block.value;
 
     const ELEM = elem && BLOCK
         ? `${BLOCK}${ELEM_CONNECTOR}${elem.value}`
