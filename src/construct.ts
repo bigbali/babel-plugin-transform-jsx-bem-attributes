@@ -203,7 +203,7 @@ const constructClassNameAttribute = (
     if (!attributeValue) return null;
 
     return types.jsxAttribute(
-        types.jsxIdentifier('className'),
+        types.jsxIdentifier('classNameWTF'),
         attributeValue
     );
 };
