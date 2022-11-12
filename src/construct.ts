@@ -196,7 +196,7 @@ const constructClassNameAttribute = (
                     );
                 }
             }
-            return types.stringLiteral(final);
+            return types.stringLiteral('TEST_STR ' + final);
         }
     })();
 
