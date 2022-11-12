@@ -141,7 +141,7 @@ const constructClassNameAttribute = (
 
     const MODS = buildValue(BLOCK, ELEM, mods, ELEMENT, IS_BLOCK_INHERITED);
 
-    let final: string = EMPTY_STRING;
+    let final = '???';
 
     if (!IS_BLOCK_INHERITED) {
         // if we have both block and elem, refer to options to decide whether or not to keep block
@@ -196,7 +196,7 @@ const constructClassNameAttribute = (
                     );
                 }
             }
-            return types.stringLiteral('TEST_STR ' + final);
+            return types.stringLiteral(final);
         }
     })();
 
