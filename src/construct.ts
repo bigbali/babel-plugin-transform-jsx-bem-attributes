@@ -59,19 +59,19 @@ const buildValue = (
                 if (types.isRestElement(property.value)) return;
 
 
-                template.expressions.push(types.callExpression(
-                    types.arrowFunctionExpression(
-                        [],
-                        types.callExpression(
-                            types.memberExpression(
-                                types.identifier('console'),
-                                types.identifier('log')
-                            ),
-                            [types.stringLiteral(key), property.value as types.Expression]
-                        )
-                    ),
-                    []
-                ));
+                // template.expressions.push(types.callExpression(
+                //     types.arrowFunctionExpression(
+                //         [],
+                //         types.callExpression(
+                //             types.memberExpression(
+                //                 types.identifier('console'),
+                //                 types.identifier('log')
+                //             ),
+                //             [types.stringLiteral(key), property.value as types.Expression]
+                //         )
+                //     ),
+                //     []
+                // ));
                 template.quasis.push(types.templateElement({ raw: '' }, false));
                 template.expressions.push(types.conditionalExpression(
                     property.value as types.Expression,
