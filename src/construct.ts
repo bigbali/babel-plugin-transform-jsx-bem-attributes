@@ -34,7 +34,7 @@ const buildValue = (
         ? `${block}${SPACE}${prefix}`
         : prefix;
     const template = types.templateLiteral([
-        types.templateElement({ raw: templatePrefix || 'IF_YOU_SEE_THIS_THERE_IS_A_BIG_ERROR' }, false)
+        types.templateElement({ raw: templatePrefix }, false)
     ], []);
 
     if (types.isObjectExpression(mods)) {
