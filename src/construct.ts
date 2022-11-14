@@ -31,8 +31,8 @@ const buildValue = (
 
     // if in options we have opted to keep block when it's top level and has elem, add it
     const templatePrefix = (!isBlockInherited && elem && OPTIONS.block.preserve)
-        ? `BLOCK${SPACE}'TEMPLATE_PREFIX'`
-        : 'TEMPLATE_PREFIX';
+        ? `${SPACE}${prefix}`
+        : prefix;
     const template = types.templateLiteral([
         types.templateElement({ raw: templatePrefix }, false)
     ], []);
@@ -58,12 +58,27 @@ const buildValue = (
                 if (types.isBooleanLiteral(property.value) && property.value.value === false) return;
                 if (types.isRestElement(property.value)) return;
 
+
+                template.expressions.push(types.callExpression(
+                    types.arrowFunctionExpression(
+                        [],
+                        types.callExpression(
+                            types.memberExpression(
+                                types.identifier('console'),
+                                types.identifier('log')
+                            ),
+                            [types.stringLiteral(key), property.value as types.Expression]
+                        )
+                    ),
+                    []
+                ));
+                template.quasis.push(types.templateElement({ raw: '' }, false));
                 template.expressions.push(types.conditionalExpression(
                     property.value as types.Expression,
-                    types.stringLiteral(`${SPACE}${prefix + '!!!'}${MODS_CONNECTOR}${key}`),
-                    types.stringLiteral('???')
+                    types.stringLiteral(`${SPACE}${prefix}${MODS_CONNECTOR}${key}`),
+                    types.stringLiteral('')
                 ));
-                template.quasis.push(types.templateElement({ raw: 'QUASI' }, index === Object.keys(mods.properties).length));
+                template.quasis.push(types.templateElement({ raw: '' }, index === Object.keys(mods.properties).length));
             }
         });
     }
@@ -141,7 +156,7 @@ const constructClassNameAttribute = (
 
     const MODS = buildValue(BLOCK, ELEM, mods, ELEMENT, IS_BLOCK_INHERITED);
 
-    let final = 'FINAL_INITIALIZED ';
+    let final = '';
 
     if (!IS_BLOCK_INHERITED) {
         // if we have both block and elem, refer to options to decide whether or not to keep block
@@ -196,14 +211,14 @@ const constructClassNameAttribute = (
                     );
                 }
             }
-            return types.stringLiteral(final + ' FINAL_VALUE_DETERMINED');
+            return types.stringLiteral(final);
         }
     })();
 
     if (!attributeValue) return null;
 
     return types.jsxAttribute(
-        types.jsxIdentifier('classNameWTF'),
+        types.jsxIdentifier('className'),
         attributeValue
     );
 };
