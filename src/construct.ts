@@ -72,7 +72,7 @@ const buildValue = (
                 //     ),
                 //     []
                 // ));
-                template.quasis.push(types.templateElement({ raw: '' }, false));
+                // template.quasis.push(types.templateElement({ raw: '' }, false));
                 template.expressions.push(types.conditionalExpression(
                     property.value as types.Expression,
                     types.stringLiteral(`${SPACE}${prefix}${MODS_CONNECTOR}${key}`),
