@@ -30,11 +30,15 @@ const buildValue = (
     }
 
     // if in options we have opted to keep block when it's top level and has elem, add it
-    const templatePrefix = !isBlockInherited && elem && OPTIONS.block.preserve ? `${block}${SPACE}${prefix}` : prefix;
-    const template = types.templateLiteral([types.templateElement({ raw: templatePrefix }, false)], []);
+    const templatePrefix = (!isBlockInherited && elem && OPTIONS.block.preserve)
+        ? `${block}${SPACE}${prefix}`
+        : prefix;
+    const template = types.templateLiteral([
+        types.templateElement({ raw: templatePrefix }, false)
+    ], []);
 
     if (types.isObjectExpression(mods)) {
-        mods.properties.forEach((property) => {
+        mods.properties.forEach((property, index) => {
             if (types.isSpreadElement(property)) return;
 
             if (types.isObjectProperty(property)) {
@@ -59,9 +63,8 @@ const buildValue = (
                     types.stringLiteral(`${SPACE}${prefix}${MODS_CONNECTOR}${key}`),
                     types.stringLiteral(EMPTY_STRING)
                 ));
-                template.quasis.push(types.templateElement({ raw: EMPTY_STRING }));
+                template.quasis.push(types.templateElement({ raw: EMPTY_STRING }, index === Object.keys(mods.properties).length));
             }
-
         });
     }
 
@@ -107,6 +110,8 @@ const buildValue = (
             );
             template.quasis.push(types.templateElement({ raw: EMPTY_STRING }));
         }
+
+        // TODO handle case object
     }
 
     if (template.expressions.length === 0) return null;
