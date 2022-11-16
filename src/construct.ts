@@ -38,7 +38,7 @@ const buildValue = (
     ], []);
 
     if (types.isObjectExpression(mods)) {
-        mods.properties.forEach((property) => {
+        mods.properties.forEach((property, index) => {
             if (types.isSpreadElement(property)) return;
 
             if (types.isObjectProperty(property)) {
@@ -63,7 +63,7 @@ const buildValue = (
                     types.stringLiteral(`${SPACE}${prefix}${MODS_CONNECTOR}${key}`),
                     types.stringLiteral(EMPTY_STRING)
                 ));
-                template.quasis.push(types.templateElement({ raw: EMPTY_STRING }));
+                template.quasis.push(types.templateElement({ raw: EMPTY_STRING }, index === Object.keys(mods.properties).length));
             }
         });
     }
