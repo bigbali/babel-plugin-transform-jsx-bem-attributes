@@ -8,8 +8,8 @@
         "url": "git+https://github.com/bigbali/babel-plugin-transform-jsx-bem-attributes.git"
     },
     "files": [
-        "lib/*",
-        "*.d.ts"
+        "lib/*.js",
+        "index.d.ts"
     ],
     "keywords": [
         "babel",
