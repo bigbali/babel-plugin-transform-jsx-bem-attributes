@@ -15,7 +15,8 @@
         "checkJs": true,
         "incremental": true,
         "pretty": true,
-        "composite": false
+        "composite": false,
+        "declaration": true
     },
     "types": [
         "node"
